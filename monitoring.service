@@ -1,0 +1,14 @@
+[Unit]
+Description=Service de Monitoring Système Ubuntu (Session Utilisateur)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/jonathan/Documents/PERSONNEL/Informatique/MONITORING_UBUNTU
+ExecStart=/home/jonathan/Documents/PERSONNEL/Informatique/MONITORING_UBUNTU/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubuntu Monitoring Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --card-bg: rgba(17, 24, 39, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            
+            --accent-cyan: #06b6d4;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            
+            --glow-cyan: rgba(6, 182, 212, 0.15);
+            --glow-purple: rgba(168, 85, 247, 0.15);
+            --glow-green: rgba(16, 185, 129, 0.15);
+            --glow-red: rgba(239, 68, 68, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 10%, rgba(168, 85, 247, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 90%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100/vh;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 16px 32px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            color: var(--accent-cyan);
+            filter: drop-shadow(0 0 8px var(--accent-cyan));
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 0%, #a5f3fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-green);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        .pulse-dot.disconnected {
+            background-color: var(--accent-red);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 2s infinite;
+        }
+
+        .pulse-dot.connecting {
+            background-color: var(--accent-amber);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            animation: pulse-amber 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes pulse-amber {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* Alert Banner Container */
+        #alert-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(239, 68, 68, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 16px 24px;
+            color: #fca5a5;
+            font-weight: 500;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1), pulseBorderRed 2s infinite alternate;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulseBorderRed {
+            0% { border-color: rgba(239, 68, 68, 0.3); }
+            100% { border-color: rgba(239, 68, 68, 0.6); }
+        }
+
+        .alert-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Grid Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        /* Cards styling */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        .card-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        /* Progress bars */
+        .progress-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Specific card colors & glows */
+        .cpu-card .progress-bar { background: linear-gradient(90deg, var(--accent-cyan), #22d3ee); }
+        .cpu-card .card-icon { color: var(--accent-cyan); filter: drop-shadow(0 0 6px var(--glow-cyan)); }
+        
+        .ram-card .progress-bar { background: linear-gradient(90deg, var(--accent-purple), #c084fc); }
+        .ram-card .card-icon { color: var(--accent-purple); filter: drop-shadow(0 0 6px var(--glow-purple)); }
+        
+        .temp-card .card-icon { color: var(--accent-amber); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.2)); }
+        
+        .net-card .card-icon { color: var(--accent-green); filter: drop-shadow(0 0 6px var(--glow-green)); }
+
+        /* Card alert state */
+        .card.threshold-exceeded {
+            border-color: rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.15);
+            background: rgba(239, 68, 68, 0.03);
+            animation: cardAlertGlow 1.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes cardAlertGlow {
+            0% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.1); }
+            100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.6); }
+        }
+
+        /* CPU cores visualizer */
+        .cores-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .core-bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .core-bar-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            height: 60px;
+            width: 12px;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+        }
+
+        .core-bar {
+            width: 100%;
+            height: 0%;
+            background: var(--accent-cyan);
+            border-radius: 4px;
+            transition: height 0.5s ease-out;
+        }
+
+        .core-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Storage Partitions List */
+        .partition-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .partition-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .partition-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .partition-mount {
+            color: var(--text-primary);
+        }
+
+        .partition-usage {
+            color: var(--text-secondary);
+        }
+
+        .partition-bar-container {
+            height: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .partition-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        /* Speeds / Extra info */
+        .submetrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .submetric-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .submetric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .submetric-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Large Chart Card */
+        .chart-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+            min-height: 350px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+
+        /* Temperature layout */
+        .temp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .temp-gauge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .temp-gauge-val {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 8px;
+        }
+
+        .temp-gauge-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navbar -->
+        <nav>
+            <div class="logo-section">
+                <i data-lucide="activity" class="logo-icon"></i>
+                <h1>UBUNTU MONITOR</h1>
+            </div>
+            <div class="status-section">
+                <span id="uptime-display" style="font-size: 14px; color: var(--text-secondary);">Temps d'activité: --:--:--</span>
+                <div class="status-badge">
+                    <div id="status-dot" class="pulse-dot connecting"></div>
+                    <span id="status-text">Connexion...</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dynamic Alert Banner -->
+        <div id="alert-banner">
+            <div class="alert-content">
+                <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+                <span id="alert-message">Alerte : Dépassement de seuil critique détecté sur le système !</span>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+            <!-- CPU Card -->
+            <div class="card cpu-card" id="cpu-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="cpu" class="card-icon"></i>
+                        <span>Processeur</span>
+                    </div>
+                </div>
+                <div class="card-value" id="cpu-val">0%</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="cpu-bar"></div>
+                </div>
+                <div class="progress-labels">
+                    <span>Charge globale</span>
+                    <span id="cpu-cores-count">Cœurs: 0</span>
+                </div>
+                
+                <!-- Per-core usage container -->
+                <div class="cores-container" id="cores-container">
+                    <!-- Dynamic core bars -->
+                </div>
+            </div>
+
+            <!-- RAM Card -->
+            <div class="card ram-card" id="ram-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="database" class="card-icon"></i>
+                        <span>Mémoire RAM</span>
+                    </div>
+                </div>
+                <div class="card-value" id="ram-val">0%</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="ram-bar"></div>
+                </div>
+                <div class="progress-labels">
+                    <span id="ram-used-text">0 GB utilisés</span>
+                    <span id="ram-total-text">Total: 0 GB</span>
+                </div>
+                
+                <div class="submetrics">
+                    <div class="submetric-item">
+                        <span class="submetric-label">Libre</span>
+                        <span class="submetric-value" id="ram-free-val">0 GB</span>
+                    </div>
+                    <div class="submetric-item">
+                        <span class="submetric-label">Swap / Cache</span>
+                        <span class="submetric-value" id="ram-swap-val">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temperatures Card -->
+            <div class="card temp-card" id="temp-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="thermometer" class="card-icon"></i>
+                        <span>Températures</span>
+                    </div>
+                </div>
+                <div class="card-value" id="temp-val">--°C</div>
+                
+                <div class="temp-grid">
+                    <div class="temp-gauge">
+                        <i data-lucide="cpu" style="color: var(--accent-cyan); width: 20px; height: 20px;"></i>
+                        <span class="temp-gauge-val" id="temp-cpu-val">--°C</span>
+                        <span class="temp-gauge-label">CPU (Core)</span>
+                    </div>
+                    <div class="temp-gauge">
+                        <i data-lucide="monitor" style="color: var(--accent-purple); width: 20px; height: 20px;"></i>
+                        <span class="temp-gauge-val" id="temp-gpu-val">--°C</span>
+                        <span class="temp-gauge-label">GPU (Graphique)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage Card -->
+            <div class="card disk-card" id="disk-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="hard-drive" class="card-icon"></i>
+                        <span>Stockage & I/O</span>
+                    </div>
+                </div>
+                <div class="partition-list" id="partition-list">
+                    <!-- Dynamic partition items -->
+                </div>
+                
+                <div class="submetrics">
+                    <div class="submetric-item">
+                        <span class="submetric-label">Vitesse Lecture</span>
+                        <span class="submetric-value" id="disk-read-val">0 KB/s</span>
+                    </div>
+                    <div class="submetric-item">
+                        <span class="submetric-label">Vitesse Écriture</span>
+                        <span class="submetric-value" id="disk-write-val">0 KB/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Card -->
+            <div class="card net-card" id="net-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="wifi" class="card-icon"></i>
+                        <span>Débits Réseau</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="arrow-down" style="color: var(--accent-green); width: 16px; height: 16px;"></i> Téléchargement (IN)
+                        </span>
+                        <span class="card-value" style="font-size: 24px; margin-bottom: 0;" id="net-in-val">0 KB/s</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="arrow-up" style="color: var(--accent-cyan); width: 16px; height: 16px;"></i> Téléversement (OUT)
+                        </span>
+                        <span class="card-value" style="font-size: 24px; margin-bottom: 0;" id="net-out-val">0 KB/s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Chart Card -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i data-lucide="trending-up" class="card-icon" style="color: var(--accent-cyan);"></i>
+                    <span>Historique Temps Réel (60 secondes)</span>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="history-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // Helpers for sizes and formatting
+        function formatBytes(bytes, decimals = 1) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function formatSpeed(bytesPerSec) {
+            if (bytesPerSec === 0 || isNaN(bytesPerSec)) return '0 KB/s';
+            const k = 1024;
+            const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+            const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+            if (i <= 0) return bytesPerSec.toFixed(0) + ' ' + sizes[0];
+            return (bytesPerSec / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+        }
+
+        // --- CHART SETUP ---
+        const ctx = document.getElementById('history-chart').getContext('2d');
+        const maxDataPoints = 60;
+        const labels = Array.from({length: maxDataPoints}, (_, i) => i - maxDataPoints + 1 + 's');
+        
+        const chartData = {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'CPU (%)',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: '#06b6d4',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    fill: true,
+                    backgroundColor: 'rgba(6, 182, 212, 0.05)'
+                },
+                {
+                    label: 'RAM (%)',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: '#a855f7',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    fill: true,
+                    backgroundColor: 'rgba(168, 85, 247, 0.05)'
+                },
+                {
+                    label: 'Température CPU (°C)',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: '#ef4444',
+                    borderWidth: 1.5,
+                    borderDash: [5, 5],
+                    tension: 0.3,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        };
+
+        const chartConfig = {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 0 // No animation on live updates for performance
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.03)'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { family: 'Outfit', size: 10 }
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { family: 'Outfit', size: 10 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#f3f4f6',
+                            font: { family: 'Outfit', size: 12, weight: 500 }
+                        }
+                    }
+                }
+            }
+        };
+
+        const historyChart = new Chart(ctx, chartConfig);
+
+        // Uptime counter state
+        let appStartTime = null;
+
+        function updateUptime(timestamp) {
+            if (!appStartTime) appStartTime = timestamp;
+            const diff = Math.floor(timestamp - appStartTime);
+            const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const secs = String(diff % 60).padStart(2, '0');
+            document.getElementById('uptime-display').textContent = `Temps d'activité: ${hrs}:${mins}:${secs}`;
+        }
+
+        // --- WEBSOCKET CONNECTION ---
+        let ws;
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            statusDot.className = 'pulse-dot connecting';
+            statusText.textContent = 'Connexion...';
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                statusDot.className = 'pulse-dot';
+                statusText.textContent = 'Connecté';
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateUI(data);
+            };
+            
+            ws.onclose = () => {
+                statusDot.className = 'pulse-dot disconnected';
+                statusText.textContent = 'Déconnecté';
+                // Try reconnect in 3s
+                setTimeout(connect, 3000);
+            };
+        }
+
+        // Update Dashboard Elements
+        function updateUI(metrics) {
+            updateUptime(metrics.timestamp);
+            
+            // 1. CPU
+            const cpuUsage = metrics.cpu.usage;
+            document.getElementById('cpu-val').textContent = `${cpuUsage.toFixed(1)}%`;
+            document.getElementById('cpu-bar').style.width = `${cpuUsage}%`;
+            document.getElementById('cpu-cores-count').textContent = `Cœurs: ${metrics.cpu.count}`;
+            
+            // Cores visualization
+            const coresContainer = document.getElementById('cores-container');
+            if (coresContainer.children.length !== metrics.cpu.cores.length) {
+                coresContainer.innerHTML = '';
+                metrics.cpu.cores.forEach((coreVal, idx) => {
+                    const barWrapper = document.createElement('div');
+                    barWrapper.className = 'core-bar-wrapper';
+                    barWrapper.innerHTML = `
+                        <div class="core-bar-container">
+                            <div class="core-bar" id="core-bar-${idx}"></div>
+                        </div>
+                        <span class="core-label">C${idx+1}</span>
+                    `;
+                    coresContainer.appendChild(barWrapper);
+                });
+            }
+            
+            metrics.cpu.cores.forEach((coreVal, idx) => {
+                const bar = document.getElementById(`core-bar-${idx}`);
+                if (bar) {
+                    bar.style.height = `${coreVal}%`;
+                    if (coreVal > 90) {
+                        bar.style.background = 'var(--accent-red)';
+                    } else if (coreVal > 70) {
+                        bar.style.background = 'var(--accent-amber)';
+                    } else {
+                        bar.style.background = 'var(--accent-cyan)';
+                    }
+                }
+            });
+
+            // 2. RAM
+            const ram = metrics.ram;
+            document.getElementById('ram-val').textContent = `${ram.percent.toFixed(1)}%`;
+            document.getElementById('ram-bar').style.width = `${ram.percent}%`;
+            document.getElementById('ram-used-text').textContent = `${formatBytes(ram.used)} utilisés`;
+            document.getElementById('ram-total-text').textContent = `Total: ${formatBytes(ram.total)}`;
+            document.getElementById('ram-free-val').textContent = formatBytes(ram.free);
+
+            // Swap/Cache computation or display
+            document.getElementById('ram-swap-val').textContent = formatBytes(ram.total - ram.used - ram.free);
+
+            // 3. Temperatures
+            const temps = metrics.temperatures;
+            if (temps.cpu !== null) {
+                document.getElementById('temp-val').textContent = `${temps.cpu.toFixed(0)}°C`;
+                document.getElementById('temp-cpu-val').textContent = `${temps.cpu.toFixed(1)}°C`;
+            } else {
+                document.getElementById('temp-val').textContent = `--`;
+                document.getElementById('temp-cpu-val').textContent = `N/A`;
+            }
+            
+            if (temps.gpu !== null) {
+                document.getElementById('temp-gpu-val').textContent = `${temps.gpu.toFixed(1)}°C`;
+            } else {
+                document.getElementById('temp-gpu-val').textContent = `N/A`;
+            }
+
+            // 4. Disk list & partition display
+            const partitionList = document.getElementById('partition-list');
+            partitionList.innerHTML = '';
+            
+            metrics.disks.forEach((disk) => {
+                const partitionItem = document.createElement('div');
+                partitionItem.className = 'partition-item';
+                partitionItem.innerHTML = `
+                    <div class="partition-meta">
+                        <span class="partition-mount">${disk.mountpoint} (${disk.fstype})</span>
+                        <span class="partition-usage">${disk.percent}%</span>
+                    </div>
+                    <div class="partition-bar-container">
+                        <div class="partition-bar" style="width: ${disk.percent}%; background: ${disk.percent > 90 ? 'var(--accent-red)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)'}"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                        <span>Libre: ${formatBytes(disk.free)}</span>
+                        <span>Total: ${formatBytes(disk.total)}</span>
+                    </div>
+                `;
+                partitionList.appendChild(partitionItem);
+            });
+            
+            // Disk Speed
+            document.getElementById('disk-read-val').textContent = formatSpeed(metrics.disk_io.read_speed);
+            document.getElementById('disk-write-val').textContent = formatSpeed(metrics.disk_io.write_speed);
+
+            // 5. Network Speed
+            document.getElementById('net-in-val').textContent = formatSpeed(metrics.net_io.bytes_recv_speed);
+            document.getElementById('net-out-val').textContent = formatSpeed(metrics.net_io.bytes_sent_speed);
+
+            // --- ALERTS HIGHLIGHTS ---
+            const thresholds = metrics.thresholds;
+            let activeAlertMessages = [];
+            
+            // CPU alert status
+            const cpuCard = document.getElementById('cpu-card');
+            if (cpuUsage > thresholds.cpu_usage) {
+                cpuCard.classList.add('threshold-exceeded');
+                activeAlertMessages.push(`CPU critique (${cpuUsage.toFixed(1)}% > ${thresholds.cpu_usage}%)`);
+            } else {
+                cpuCard.classList.remove('threshold-exceeded');
+            }
+
+            // RAM alert status
+            const ramCard = document.getElementById('ram-card');
+            if (ram.percent > thresholds.ram_usage) {
+                ramCard.classList.add('threshold-exceeded');
+                activeAlertMessages.push(`RAM critique (${ram.percent.toFixed(1)}% > ${thresholds.ram_usage}%)`);
+            } else {
+                ramCard.classList.remove('threshold-exceeded');
+            }
+
+            // Temperature alert status
+            const tempCard = document.getElementById('temp-card');
+            if (temps.cpu !== null && temps.cpu > thresholds.cpu_temp) {
+                tempCard.classList.add('threshold-exceeded');
+                activeAlertMessages.push(`Température CPU critique (${temps.cpu.toFixed(1)}°C > ${thresholds.cpu_temp}°C)`);
+            } else {
+                tempCard.classList.remove('threshold-exceeded');
+            }
+
+            // Display alert banner
+            const alertBanner = document.getElementById('alert-banner');
+            const alertMsg = document.getElementById('alert-message');
+            if (activeAlertMessages.length > 0) {
+                alertBanner.style.display = 'flex';
+                alertMsg.textContent = `Alerte Système : ${activeAlertMessages.join(' | ')}`;
+            } else {
+                alertBanner.style.display = 'none';
+            }
+
+            // --- HISTORICAL CHART UPDATE ---
+            // Shift datasets left and push new values
+            const cpuDataset = historyChart.data.datasets[0].data;
+            cpuDataset.shift();
+            cpuDataset.push(cpuUsage);
+
+            const ramDataset = historyChart.data.datasets[1].data;
+            ramDataset.shift();
+            ramDataset.push(ram.percent);
+
+            const tempDataset = historyChart.data.datasets[2].data;
+            tempDataset.shift();
+            tempDataset.push(temps.cpu !== null ? temps.cpu : 0);
+
+            historyChart.update('none'); // Update immediately without full redraw animations for raw speed
+        }
+
+        // Start Connection
+        connect();
+    </script>
+</body>
+</html>
