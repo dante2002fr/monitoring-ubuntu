@@ -13,6 +13,26 @@ app = FastAPI(title="Ubuntu Monitoring Service")
 # Dossier de base pour localiser index.html
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
+
+def load_settings() -> dict:
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"notifications_enabled": True}
+
+def save_settings(data: dict):
+    try:
+        with open(SETTINGS_FILE, "w") as f:
+            json.dump(data, f)
+    except Exception as e:
+        print(f"[ERREUR] Échec de la sauvegarde des paramètres: {e}")
+
+settings = load_settings()
+
 # Configuration des seuils d'alerte par défaut
 THRESHOLDS = {
     "cpu_usage": 90.0,       # en %
@@ -123,6 +143,9 @@ def send_desktop_notification(title: str, message: str, urgency: str = "normal")
 
 def check_alerts(metrics: dict):
     """Vérifie si les seuils de métriques sont dépassés et gère l'envoi d'alertes."""
+    if not settings.get("notifications_enabled", True):
+        return
+        
     now = time.time()
     
     # 1. Alerte CPU
@@ -245,7 +268,8 @@ def collect_metrics_data() -> dict:
             "cpu": cpu_temp,
             "gpu": gpu_temp
         },
-        "thresholds": THRESHOLDS
+        "thresholds": THRESHOLDS,
+        "notifications_enabled": settings.get("notifications_enabled", True)
     }
     
     return metrics
@@ -312,8 +336,15 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             # Garder la connexion ouverte, écouter d'éventuels messages du client
-            data = await websocket.receive_text()
-            # On peut ajouter ici de la logique si le client envoie des commandes
+            data_str = await websocket.receive_text()
+            try:
+                data = json.loads(data_str)
+                if data.get("type") == "toggle_notifications":
+                    enabled = bool(data.get("enabled", True))
+                    settings["notifications_enabled"] = enabled
+                    save_settings(settings)
+            except Exception as e:
+                print(f"[ERREUR] Message WS invalide: {e}")
     except WebSocketDisconnect:
         active_connections.remove(websocket)
     except Exception:
