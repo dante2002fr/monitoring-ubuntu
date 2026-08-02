@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0f19">
     <title>Ubuntu Monitoring Dashboard</title>
+    
+    <!-- PWA Link & Icons -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon.svg">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,7 +63,6 @@
             overflow-x: hidden;
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -81,7 +86,6 @@
             gap: 24px;
         }
 
-        /* Navbar */
         nav {
             display: flex;
             justify-content: space-between;
@@ -160,9 +164,7 @@
         }
 
         .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
+            width: 8px; height: 8px; border-radius: 50%;
             background-color: var(--accent-green);
             box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
             animation: pulse-green 2s infinite;
@@ -198,7 +200,6 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
         }
 
-        /* System Info Banner */
         .sys-info-banner {
             display: flex;
             align-items: center;
@@ -225,7 +226,6 @@
             font-weight: 500;
         }
 
-        /* Alert Banner */
         #alert-banner {
             display: none;
             align-items: center;
@@ -282,10 +282,7 @@
             color: var(--text-primary);
         }
 
-        .card-icon {
-            width: 22px;
-            height: 22px;
-        }
+        .card-icon { width: 22px; height: 22px; }
 
         .card-value {
             font-family: 'Space Grotesk', sans-serif;
@@ -298,24 +295,18 @@
         .progress-container {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
-            height: 8px;
-            width: 100%;
-            overflow: hidden;
-            margin-bottom: 8px;
+            height: 8px; width: 100%;
+            overflow: hidden; margin-bottom: 8px;
         }
 
         .progress-bar {
-            height: 100%;
-            border-radius: 10px;
-            width: 0%;
+            height: 100%; border-radius: 10px; width: 0%;
             transition: width 0.5s ease-out;
         }
 
         .progress-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-secondary);
+            display: flex; justify-content: space-between;
+            font-size: 13px; color: var(--text-secondary);
         }
 
         .cpu-card .progress-bar { background: linear-gradient(90deg, var(--accent-cyan), #22d3ee); }
@@ -340,366 +331,235 @@
         }
 
         .cores-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 16px;
-            padding-top: 16px;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; margin-top: 16px; padding-top: 16px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .core-bar-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
         }
 
         .core-bar-container {
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 4px;
-            height: 60px;
-            width: 12px;
-            display: flex;
-            align-items: flex-end;
-            overflow: hidden;
+            border-radius: 4px; height: 60px; width: 12px;
+            display: flex; align-items: flex-end; overflow: hidden;
         }
 
         .core-bar {
-            width: 100%;
-            height: 0%;
-            background: var(--accent-cyan);
-            border-radius: 4px;
-            transition: height 0.5s ease-out;
+            width: 100%; height: 0%; background: var(--accent-cyan);
+            border-radius: 4px; transition: height 0.5s ease-out;
         }
 
-        .core-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-        }
+        .core-label { font-size: 10px; color: var(--text-secondary); }
 
-        .partition-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 10px;
-        }
+        .partition-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 
         .partition-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            display: flex; flex-direction: column; gap: 4px;
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 10px;
+            border-radius: 12px; padding: 10px;
         }
 
-        .partition-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            font-weight: 500;
-        }
+        .partition-meta { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; }
 
         .partition-bar-container {
-            height: 5px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-            overflow: hidden;
+            height: 5px; background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px; overflow: hidden;
         }
 
         .partition-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #60a5fa);
-            width: 0%;
-            transition: width 0.5s;
+            height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            width: 0%; transition: width 0.5s;
         }
 
         .submetrics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 16px;
-            padding-top: 16px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin-top: 16px; padding-top: 16px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .submetric-item {
+        .submetric-item { display: flex; flex-direction: column; }
+        .submetric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+        .submetric-value { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+        /* Systemd Services & Ports Grid */
+        .supervision-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .supervision-grid { grid-template-columns: 1fr; }
+        }
+
+        .service-badge-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .service-badge-item {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 13px;
         }
 
-        .submetric-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 2px;
-        }
-
-        .submetric-value {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 16px;
+        .status-pill {
+            font-size: 11px;
             font-weight: 600;
-            color: var(--text-primary);
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
         }
+
+        .status-pill.active { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-pill.inactive { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156, 163, 175, 0.3); }
+        .status-pill.failed { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
 
         /* Chart Card */
         .chart-card {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
             border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 24px; padding: 24px;
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
             min-height: 400px;
         }
 
         .chart-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
         }
 
         .timeframe-group {
-            display: flex;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 4px;
+            display: flex; background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px; padding: 4px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .tf-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 6px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            font-family: 'Outfit', sans-serif;
-            transition: all 0.2s;
+            background: transparent; border: none;
+            color: var(--text-secondary); padding: 6px 14px;
+            border-radius: 8px; cursor: pointer;
+            font-size: 12px; font-weight: 500;
+            font-family: 'Outfit', sans-serif; transition: all 0.2s;
         }
 
-        .tf-btn.active {
-            background: var(--accent-cyan);
-            color: #000;
-            font-weight: 600;
-        }
+        .tf-btn.active { background: var(--accent-cyan); color: #000; font-weight: 600; }
 
         .chart-stats-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
-            padding-top: 16px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px; margin-top: 20px; padding-top: 16px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .stat-box {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 10px;
-            text-align: center;
+            border-radius: 12px; padding: 10px; text-align: center;
         }
 
-        .stat-box-title {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .stat-box-value {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-        }
+        .stat-box-title { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .stat-box-value { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; }
 
         /* Top Processes Card */
         .proc-card {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
             border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 24px; padding: 24px;
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
         }
 
         .tab-group {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 12px;
+            display: flex; gap: 12px; margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 12px;
         }
 
         .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 6px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            font-family: 'Outfit', sans-serif;
-            transition: all 0.2s;
+            background: transparent; border: none;
+            color: var(--text-secondary); padding: 6px 16px;
+            border-radius: 10px; cursor: pointer;
+            font-size: 14px; font-weight: 500;
+            font-family: 'Outfit', sans-serif; transition: all 0.2s;
         }
 
         .tab-btn.active {
             background: rgba(255, 255, 255, 0.08);
-            color: var(--text-primary);
-            border: 1px solid var(--card-border);
+            color: var(--text-primary); border: 1px solid var(--card-border);
         }
 
         .proc-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: left;
+            width: 100%; border-collapse: collapse;
+            font-size: 13px; text-align: left;
         }
 
         .proc-table th {
-            color: var(--text-secondary);
-            font-weight: 500;
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary); font-weight: 500;
+            padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .proc-table td {
-            padding: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             color: var(--text-primary);
         }
 
         .btn-kill {
             background: rgba(239, 68, 68, 0.15);
             border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            transition: all 0.2s;
+            color: #fca5a5; padding: 4px 10px;
+            border-radius: 6px; cursor: pointer;
+            font-size: 11px; font-weight: 600; transition: all 0.2s;
         }
 
-        .btn-kill:hover {
-            background: rgba(239, 68, 68, 0.3);
-            color: #ffffff;
-        }
+        .btn-kill:hover { background: rgba(239, 68, 68, 0.3); color: #ffffff; }
 
-        /* Modal Overlay */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
         }
 
         .modal-body {
-            background: var(--bg-secondary);
-            border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 32px;
-            width: 90%;
-            max-width: 500px;
+            background: var(--bg-secondary); border: 1px solid var(--card-border);
+            border-radius: 24px; padding: 32px; width: 90%; max-width: 500px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: flex; flex-direction: column; gap: 20px;
         }
 
-        .modal-title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
         .form-control {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 10px 14px;
-            color: var(--text-primary);
-            font-family: 'Outfit', sans-serif;
-            font-size: 14px;
-            outline: none;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 10px 14px; color: var(--text-primary);
+            font-family: 'Outfit', sans-serif; font-size: 14px; outline: none;
         }
 
-        .form-control:focus {
-            border-color: var(--accent-cyan);
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 36px;
-            height: 20px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
+        .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255, 255, 255, 0.08);
-            transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.08); transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 12px; width: 12px;
-            left: 3px; bottom: 3px;
-            background-color: var(--text-secondary);
-            transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
+            background-color: var(--text-secondary); transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 50%;
         }
 
-        input:checked + .slider {
-            background-color: var(--accent-cyan);
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
-            border-color: rgba(6, 182, 212, 0.2);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(16px);
-            background-color: #ffffff;
-        }
+        input:checked + .slider { background-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); border-color: rgba(6, 182, 212, 0.2); }
+        input:checked + .slider:before { transform: translateX(16px); background-color: #ffffff; }
     </style>
 </head>
 <body>
@@ -821,16 +681,16 @@
                     </div>
                 </div>
                 <div class="card-value" id="temp-val">--°C</div>
-                <div class="temp-grid">
-                    <div class="temp-gauge">
+                <div class="temp-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 16px;">
                         <i data-lucide="cpu" style="color: var(--accent-cyan); width: 20px; height: 20px;"></i>
-                        <span class="temp-gauge-val" id="temp-cpu-val">--°C</span>
-                        <span class="temp-gauge-label">CPU (Core)</span>
+                        <span style="font-family: 'Space Grotesk'; font-size: 28px; font-weight: 700; margin-top: 8px;" id="temp-cpu-val">--°C</span>
+                        <span style="font-size: 12px; color: var(--text-secondary);">CPU (Core)</span>
                     </div>
-                    <div class="temp-gauge">
+                    <div style="display: flex; flex-direction: column; align-items: center; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 16px;">
                         <i data-lucide="monitor" style="color: var(--accent-purple); width: 20px; height: 20px;"></i>
-                        <span class="temp-gauge-val" id="temp-gpu-val">--°C</span>
-                        <span class="temp-gauge-label">GPU (Graphique)</span>
+                        <span style="font-family: 'Space Grotesk'; font-size: 28px; font-weight: 700; margin-top: 8px;" id="temp-gpu-val">--°C</span>
+                        <span style="font-size: 12px; color: var(--text-secondary);">GPU (Graphique)</span>
                     </div>
                 </div>
             </div>
@@ -881,6 +741,47 @@
             </div>
         </div>
 
+        <!-- Supervision Grid: Systemd Services & Open Network Ports -->
+        <div class="supervision-grid">
+            <!-- Systemd Services Card -->
+            <div class="proc-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="shield-check" class="card-icon" style="color: var(--accent-green);"></i>
+                        <span>Services Systemd Clés</span>
+                    </div>
+                </div>
+                <div class="service-badge-list" id="services-badge-list">
+                    <!-- Dynamic service items -->
+                </div>
+            </div>
+
+            <!-- Open Ports Card -->
+            <div class="proc-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="radio" class="card-icon" style="color: var(--accent-cyan);"></i>
+                        <span>Ports Réseau en Écoute (LISTEN)</span>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="proc-table">
+                        <thead>
+                            <tr>
+                                <th>Port</th>
+                                <th>Proto</th>
+                                <th>Processus</th>
+                                <th>PID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ports-table-body">
+                            <!-- Dynamic ports -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Top Processes Manager Card -->
         <div class="proc-card">
             <div class="card-header">
@@ -919,15 +820,16 @@
             <div class="chart-controls">
                 <div class="card-title">
                     <i data-lucide="trending-up" class="card-icon" style="color: var(--accent-cyan);"></i>
-                    <span>Historique Temporel</span>
+                    <span>Historique Temporel (SQLite Persistant)</span>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <div class="timeframe-group">
-                        <button class="tf-btn active" id="tf-1m" onclick="setTimeframe(60, '1m')">1 min</button>
-                        <button class="tf-btn" id="tf-5m" onclick="setTimeframe(300, '5m')">5 min</button>
-                        <button class="tf-btn" id="tf-15m" onclick="setTimeframe(900, '15m')">15 min</button>
-                        <button class="tf-btn" id="tf-1h" onclick="setTimeframe(3600, '1h')">1 heure</button>
+                        <button class="tf-btn active" id="tf-1m" onclick="setTimeframe(60, '1m', 1)">1 min</button>
+                        <button class="tf-btn" id="tf-5m" onclick="setTimeframe(300, '5m', 1)">5 min</button>
+                        <button class="tf-btn" id="tf-15m" onclick="setTimeframe(900, '15m', 1)">15 min</button>
+                        <button class="tf-btn" id="tf-1h" onclick="setTimeframe(3600, '1h', 1)">1 heure</button>
+                        <button class="tf-btn" id="tf-24h" onclick="setTimeframe(86400, '24h', 24)">24 heures</button>
                     </div>
 
                     <button class="btn-action" onclick="exportData('csv')">
@@ -964,7 +866,7 @@
     <!-- Modal Settings -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-body">
-            <div class="modal-title">
+            <div style="font-family: 'Space Grotesk'; font-size: 20px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
                 <span>Paramètres & Alertes</span>
                 <i data-lucide="x" style="cursor: pointer; width: 20px; height: 20px;" onclick="closeSettingsModal()"></i>
             </div>
@@ -1013,6 +915,13 @@
     </div>
 
     <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW reg error:', err));
+            });
+        }
+
         lucide.createIcons();
 
         function formatBytes(bytes, decimals = 1) {
@@ -1033,16 +942,14 @@
             return (bytesPerSec / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
         }
 
-        // --- GLOBAL STATE ---
         let currentSettings = {};
-        let rawHistoryData = []; // Full history from server
+        let rawHistoryData = [];
         let currentTimeframeSeconds = 60;
         let activeProcTab = 'cpu';
         let latestProcessesData = { top_cpu: [], top_ram: [] };
         let audioCtx = null;
         let lastAudioBeepTime = 0;
 
-        // --- CHART SETUP ---
         const ctx = document.getElementById('history-chart').getContext('2d');
         const chartData = {
             labels: [],
@@ -1105,7 +1012,6 @@
             }
         });
 
-        // Uptime counter
         let appStartTime = null;
         function updateUptime(timestamp) {
             if (!appStartTime) appStartTime = timestamp;
@@ -1116,7 +1022,6 @@
             document.getElementById('uptime-display').textContent = `Temps d'activité: ${hrs}:${mins}:${secs}`;
         }
 
-        // --- WEBSOCKET ---
         let ws;
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
@@ -1133,8 +1038,7 @@
             ws.onopen = () => {
                 statusDot.className = 'pulse-dot';
                 statusText.textContent = 'Connecté';
-                // Demand history on open
-                ws.send(JSON.stringify({ type: 'get_history' }));
+                ws.send(JSON.stringify({ type: 'get_history', hours: 24.0 }));
             };
             
             ws.onmessage = (event) => {
@@ -1156,11 +1060,10 @@
             };
         }
 
-        // Play subtle dual-tone alert beep
         function playAlertSound() {
             if (!currentSettings.sound_enabled) return;
             const now = Date.now();
-            if (now - lastAudioBeepTime < 10000) return; // Beep at most every 10s
+            if (now - lastAudioBeepTime < 10000) return;
             lastAudioBeepTime = now;
 
             try {
@@ -1168,8 +1071,8 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.15); // A4
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.15);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
                 osc.connect(gain);
@@ -1182,7 +1085,6 @@
         function updateUI(metrics) {
             updateUptime(metrics.timestamp);
 
-            // System Info Header
             if (metrics.system) {
                 document.getElementById('sys-hostname').textContent = metrics.system.hostname || '--';
                 document.getElementById('sys-kernel').textContent = metrics.system.kernel || '--';
@@ -1196,7 +1098,6 @@
                 document.getElementById('sys-battery').textContent = `${metrics.battery.percent}% (${metrics.battery.power_plugged ? 'Secteur' : 'Batterie'})`;
             }
 
-            // Sync Settings
             if (metrics.settings) {
                 currentSettings = metrics.settings;
             }
@@ -1278,7 +1179,37 @@
             document.getElementById('net-in-val').textContent = formatSpeed(metrics.net_io.bytes_recv_speed);
             document.getElementById('net-out-val').textContent = formatSpeed(metrics.net_io.bytes_sent_speed);
 
-            // Processes
+            // Systemd Services
+            if (metrics.services) {
+                const srvContainer = document.getElementById('services-badge-list');
+                srvContainer.innerHTML = '';
+                metrics.services.forEach(srv => {
+                    srvContainer.innerHTML += `
+                        <div class="service-badge-item">
+                            <span style="font-weight: 500;">${srv.name}</span>
+                            <span class="status-pill ${srv.status}">${srv.status}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Open Network Ports
+            if (metrics.open_ports) {
+                const portsBody = document.getElementById('ports-table-body');
+                portsBody.innerHTML = '';
+                metrics.open_ports.forEach(pt => {
+                    portsBody.innerHTML += `
+                        <tr>
+                            <td><strong style="color: var(--accent-cyan);">${pt.port}</strong></td>
+                            <td><span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${pt.proto}</span></td>
+                            <td>${pt.process}</td>
+                            <td>${pt.pid}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Top Processes
             if (metrics.processes) {
                 latestProcessesData = metrics.processes;
                 renderProcessesTable();
@@ -1324,12 +1255,10 @@
                 ram: ram.percent,
                 temp: temps.cpu !== null ? temps.cpu : 0.0
             });
-            if (rawHistoryData.length > 3600) rawHistoryData.shift();
             
             renderHistoryChart();
         }
 
-        // Render Top Processes Table
         function renderProcessesTable() {
             const body = document.getElementById('proc-table-body');
             body.innerHTML = '';
@@ -1371,14 +1300,18 @@
             }
         }
 
-        // Chart Timeframe Switcher
-        function setTimeframe(seconds, id) {
+        function setTimeframe(seconds, id, hoursNeeded) {
             currentTimeframeSeconds = seconds;
-            ['1m', '5m', '15m', '1h'].forEach(tf => {
+            ['1m', '5m', '15m', '1h', '24h'].forEach(tf => {
                 const btn = document.getElementById(`tf-${tf}`);
                 if (btn) btn.className = tf === id ? 'tf-btn active' : 'tf-btn';
             });
-            renderHistoryChart();
+            // Fetch DB history if needed
+            if (ws && ws.readyState === WebSocket.OPEN && hoursNeeded > 1) {
+                ws.send(JSON.stringify({ type: 'get_history', hours: hoursNeeded }));
+            } else {
+                renderHistoryChart();
+            }
         }
 
         function renderHistoryChart() {
@@ -1388,6 +1321,9 @@
 
             const labels = filtered.map(pt => {
                 const d = new Date(pt.timestamp * 1000);
+                if (currentTimeframeSeconds > 3600) {
+                    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                }
                 return d.toLocaleTimeString('fr-FR', { minute: '2-digit', second: '2-digit' });
             });
 
@@ -1401,7 +1337,6 @@
             historyChart.data.datasets[2].data = tempVals;
             historyChart.update('none');
 
-            // Calculate Stats (Min / Avg / Max)
             const calcStats = arr => {
                 if (arr.length === 0) return '-- / -- / --';
                 const min = Math.min(...arr).toFixed(1);
@@ -1425,7 +1360,6 @@
             document.getElementById('stat-temp').textContent = calcTempStats(tempVals);
         }
 
-        // Export Data
         function exportData(format) {
             if (rawHistoryData.length === 0) {
                 alert("Aucune donnée disponible à exporter.");
@@ -1456,7 +1390,6 @@
             link.click();
         }
 
-        // Modal Settings Controls
         function openSettingsModal() {
             document.getElementById('cfg-th-cpu').value = currentSettings.threshold_cpu || 90;
             document.getElementById('cfg-th-ram').value = currentSettings.threshold_ram || 95;
