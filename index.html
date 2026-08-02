@@ -52,7 +52,7 @@
                 radial-gradient(at 50% 90%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
             background-attachment: fixed;
             color: var(--text-primary);
-            min-height: 100/vh;
+            min-height: 100vh;
             padding: 24px;
             overflow-x: hidden;
         }
@@ -73,7 +73,6 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        /* Container Layout */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -92,8 +91,10 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--card-border);
             border-radius: 20px;
-            padding: 16px 32px;
+            padding: 16px 28px;
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .logo-section {
@@ -120,7 +121,8 @@
         .status-section {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .status-badge {
@@ -129,10 +131,32 @@
             gap: 8px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--card-border);
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 30px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
 
         .pulse-dot {
@@ -174,7 +198,34 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
         }
 
-        /* Alert Banner Container */
+        /* System Info Banner */
+        .sys-info-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .sys-info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sys-info-item strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Alert Banner */
         #alert-banner {
             display: none;
             align-items: center;
@@ -187,33 +238,15 @@
             color: #fca5a5;
             font-weight: 500;
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
-            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1), pulseBorderRed 2s infinite alternate;
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes pulseBorderRed {
-            0% { border-color: rgba(239, 68, 68, 0.3); }
-            100% { border-color: rgba(239, 68, 68, 0.6); }
-        }
-
-        .alert-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* Grid Metrics */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 24px;
         }
 
-        /* Cards styling */
         .card {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
@@ -262,7 +295,6 @@
             margin-bottom: 12px;
         }
 
-        /* Progress bars */
         .progress-container {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
@@ -286,7 +318,6 @@
             color: var(--text-secondary);
         }
 
-        /* Specific card colors & glows */
         .cpu-card .progress-bar { background: linear-gradient(90deg, var(--accent-cyan), #22d3ee); }
         .cpu-card .card-icon { color: var(--accent-cyan); filter: drop-shadow(0 0 6px var(--glow-cyan)); }
         
@@ -294,10 +325,8 @@
         .ram-card .card-icon { color: var(--accent-purple); filter: drop-shadow(0 0 6px var(--glow-purple)); }
         
         .temp-card .card-icon { color: var(--accent-amber); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.2)); }
-        
         .net-card .card-icon { color: var(--accent-green); filter: drop-shadow(0 0 6px var(--glow-green)); }
 
-        /* Card alert state */
         .card.threshold-exceeded {
             border-color: rgba(239, 68, 68, 0.4);
             box-shadow: 0 0 25px rgba(239, 68, 68, 0.15);
@@ -310,7 +339,6 @@
             100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.6); }
         }
 
-        /* CPU cores visualizer */
         .cores-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -350,7 +378,6 @@
             color: var(--text-secondary);
         }
 
-        /* Storage Partitions List */
         .partition-list {
             display: flex;
             flex-direction: column;
@@ -375,14 +402,6 @@
             font-weight: 500;
         }
 
-        .partition-mount {
-            color: var(--text-primary);
-        }
-
-        .partition-usage {
-            color: var(--text-secondary);
-        }
-
         .partition-bar-container {
             height: 5px;
             background: rgba(255, 255, 255, 0.05);
@@ -397,7 +416,6 @@
             transition: width 0.5s;
         }
 
-        /* Speeds / Extra info */
         .submetrics {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -425,7 +443,7 @@
             color: var(--text-primary);
         }
 
-        /* Large Chart Card */
+        /* Chart Card */
         .chart-card {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
@@ -433,50 +451,212 @@
             border-radius: 24px;
             padding: 24px;
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
-            min-height: 350px;
+            min-height: 400px;
         }
 
-        .chart-container {
-            position: relative;
-            height: 280px;
-            width: 100%;
-        }
-
-        /* Temperature layout */
-        .temp-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        .temp-gauge {
+        .chart-controls {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .timeframe-group {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tf-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .tf-btn.active {
+            background: var(--accent-cyan);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .chart-stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-box {
             background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 16px;
-            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px;
             text-align: center;
         }
 
-        .temp-gauge-val {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-top: 8px;
-        }
-
-        .temp-gauge-label {
-            font-size: 12px;
+        .stat-box-title {
+            font-size: 11px;
             color: var(--text-secondary);
-            margin-top: 2px;
+            margin-bottom: 4px;
         }
 
-        /* Styled Toggle Switch */
+        .stat-box-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* Top Processes Card */
+        .proc-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .tab-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+        }
+
+        .proc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .proc-table th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .proc-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+
+        .btn-kill {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-kill:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ffffff;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-body {
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .modal-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-cyan);
+        }
+
         .switch {
             position: relative;
             display: inline-block;
@@ -493,10 +673,7 @@
         .slider {
             position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(255, 255, 255, 0.08);
             transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 20px;
@@ -506,10 +683,8 @@
         .slider:before {
             position: absolute;
             content: "";
-            height: 12px;
-            width: 12px;
-            left: 3px;
-            bottom: 3px;
+            height: 12px; width: 12px;
+            left: 3px; bottom: 3px;
             background-color: var(--text-secondary);
             transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 50%;
@@ -535,18 +710,19 @@
                 <i data-lucide="activity" class="logo-icon"></i>
                 <h1>UBUNTU MONITOR</h1>
             </div>
+            
             <div class="status-section">
-                <span id="uptime-display" style="font-size: 14px; color: var(--text-secondary);">Temps d'activité: --:--:--</span>
+                <span id="uptime-display" style="font-size: 13px; color: var(--text-secondary);">Temps d'activité: --:--:--</span>
                 
-                <!-- Toggle Notifications Switch -->
-                <div class="status-badge">
-                    <i id="notif-icon" data-lucide="bell" style="width: 16px; height: 16px; color: var(--accent-cyan); transition: color 0.3s;"></i>
-                    <span style="font-size: 14px; color: var(--text-primary);">Notifs</span>
-                    <label class="switch">
-                        <input type="checkbox" id="notif-toggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
+                <button class="btn-action" onclick="openSettingsModal()">
+                    <i data-lucide="settings" style="width: 15px; height: 15px; color: var(--accent-cyan);"></i>
+                    <span>Paramètres</span>
+                </button>
+
+                <a href="/metrics" target="_blank" class="btn-action" style="text-decoration: none;">
+                    <i data-lucide="bar-chart-2" style="width: 15px; height: 15px; color: var(--accent-purple);"></i>
+                    <span>Prometheus</span>
+                </a>
 
                 <div class="status-badge">
                     <div id="status-dot" class="pulse-dot connecting"></div>
@@ -555,11 +731,35 @@
             </div>
         </nav>
 
+        <!-- System Meta Info Banner -->
+        <div class="sys-info-banner">
+            <div class="sys-info-item">
+                <i data-lucide="server" style="width: 16px; height: 16px; color: var(--accent-cyan);"></i>
+                <span>Hôte: <strong id="sys-hostname">--</strong></span>
+            </div>
+            <div class="sys-info-item">
+                <i data-lucide="terminal" style="width: 16px; height: 16px; color: var(--accent-purple);"></i>
+                <span>Noyau: <strong id="sys-kernel">--</strong></span>
+            </div>
+            <div class="sys-info-item">
+                <i data-lucide="cpu" style="width: 16px; height: 16px; color: var(--accent-green);"></i>
+                <span>CPU: <strong id="sys-cpumodel">--</strong></span>
+            </div>
+            <div class="sys-info-item">
+                <i data-lucide="gauge" style="width: 16px; height: 16px; color: var(--accent-amber);"></i>
+                <span>Load Avg: <strong id="sys-loadavg">--</strong></span>
+            </div>
+            <div class="sys-info-item" id="battery-item" style="display: none;">
+                <i data-lucide="battery-charging" style="width: 16px; height: 16px; color: var(--accent-green);" id="batt-icon"></i>
+                <span>Batterie: <strong id="sys-battery">--</strong></span>
+            </div>
+        </div>
+
         <!-- Dynamic Alert Banner -->
         <div id="alert-banner">
-            <div class="alert-content">
+            <div style="display: flex; align-items: center; gap: 12px;">
                 <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
-                <span id="alert-message">Alerte : Dépassement de seuil critique détecté sur le système !</span>
+                <span id="alert-message">Alerte : Dépassement de seuil critique détecté !</span>
             </div>
         </div>
 
@@ -581,11 +781,7 @@
                     <span>Charge globale</span>
                     <span id="cpu-cores-count">Cœurs: 0</span>
                 </div>
-                
-                <!-- Per-core usage container -->
-                <div class="cores-container" id="cores-container">
-                    <!-- Dynamic core bars -->
-                </div>
+                <div class="cores-container" id="cores-container"></div>
             </div>
 
             <!-- RAM Card -->
@@ -604,7 +800,6 @@
                     <span id="ram-used-text">0 GB utilisés</span>
                     <span id="ram-total-text">Total: 0 GB</span>
                 </div>
-                
                 <div class="submetrics">
                     <div class="submetric-item">
                         <span class="submetric-label">Libre</span>
@@ -626,7 +821,6 @@
                     </div>
                 </div>
                 <div class="card-value" id="temp-val">--°C</div>
-                
                 <div class="temp-grid">
                     <div class="temp-gauge">
                         <i data-lucide="cpu" style="color: var(--accent-cyan); width: 20px; height: 20px;"></i>
@@ -649,17 +843,14 @@
                         <span>Stockage & I/O</span>
                     </div>
                 </div>
-                <div class="partition-list" id="partition-list">
-                    <!-- Dynamic partition items -->
-                </div>
-                
+                <div class="partition-list" id="partition-list"></div>
                 <div class="submetrics">
                     <div class="submetric-item">
-                        <span class="submetric-label">Vitesse Lecture</span>
+                        <span class="submetric-label">Lecture</span>
                         <span class="submetric-value" id="disk-read-val">0 KB/s</span>
                     </div>
                     <div class="submetric-item">
-                        <span class="submetric-label">Vitesse Écriture</span>
+                        <span class="submetric-label">Écriture</span>
                         <span class="submetric-value" id="disk-write-val">0 KB/s</span>
                     </div>
                 </div>
@@ -673,7 +864,6 @@
                         <span>Débits Réseau</span>
                     </div>
                 </div>
-                
                 <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span style="font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
@@ -691,25 +881,140 @@
             </div>
         </div>
 
-        <!-- History Chart Card -->
-        <div class="chart-card">
+        <!-- Top Processes Manager Card -->
+        <div class="proc-card">
             <div class="card-header">
                 <div class="card-title">
-                    <i data-lucide="trending-up" class="card-icon" style="color: var(--accent-cyan);"></i>
-                    <span>Historique Temps Réel (60 secondes)</span>
+                    <i data-lucide="layers" class="card-icon" style="color: var(--accent-purple);"></i>
+                    <span>Top Processus Gourmands</span>
                 </div>
             </div>
-            <div class="chart-container">
+            
+            <div class="tab-group">
+                <button class="tab-btn active" id="tab-btn-cpu" onclick="switchProcTab('cpu')">Top CPU</button>
+                <button class="tab-btn" id="tab-btn-ram" onclick="switchProcTab('ram')">Top Mémoire RAM</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="proc-table">
+                    <thead>
+                        <tr>
+                            <th>PID</th>
+                            <th>Nom du Processus</th>
+                            <th>Utilisateur</th>
+                            <th>Charge CPU</th>
+                            <th>RAM</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proc-table-body">
+                        <!-- Dynamic rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- History Chart Card -->
+        <div class="chart-card">
+            <div class="chart-controls">
+                <div class="card-title">
+                    <i data-lucide="trending-up" class="card-icon" style="color: var(--accent-cyan);"></i>
+                    <span>Historique Temporel</span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div class="timeframe-group">
+                        <button class="tf-btn active" id="tf-1m" onclick="setTimeframe(60, '1m')">1 min</button>
+                        <button class="tf-btn" id="tf-5m" onclick="setTimeframe(300, '5m')">5 min</button>
+                        <button class="tf-btn" id="tf-15m" onclick="setTimeframe(900, '15m')">15 min</button>
+                        <button class="tf-btn" id="tf-1h" onclick="setTimeframe(3600, '1h')">1 heure</button>
+                    </div>
+
+                    <button class="btn-action" onclick="exportData('csv')">
+                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export CSV
+                    </button>
+                    <button class="btn-action" onclick="exportData('json')">
+                        <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Export JSON
+                    </button>
+                </div>
+            </div>
+
+            <div style="position: relative; height: 280px; width: 100%;">
                 <canvas id="history-chart"></canvas>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="chart-stats-summary">
+                <div class="stat-box">
+                    <div class="stat-box-title">CPU (Min / Moy / Max)</div>
+                    <div class="stat-box-value" style="color: var(--accent-cyan);" id="stat-cpu">-- / -- / --</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-title">RAM (Min / Moy / Max)</div>
+                    <div class="stat-box-value" style="color: var(--accent-purple);" id="stat-ram">-- / -- / --</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-title">Température (Min / Moy / Max)</div>
+                    <div class="stat-box-value" style="color: var(--accent-amber);" id="stat-temp">-- / -- / --</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Settings -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-body">
+            <div class="modal-title">
+                <span>Paramètres & Alertes</span>
+                <i data-lucide="x" style="cursor: pointer; width: 20px; height: 20px;" onclick="closeSettingsModal()"></i>
+            </div>
+
+            <div class="form-group">
+                <label>Seuil d'alerte CPU (%)</label>
+                <input type="number" class="form-control" id="cfg-th-cpu" min="10" max="100" step="5">
+            </div>
+
+            <div class="form-group">
+                <label>Seuil d'alerte RAM (%)</label>
+                <input type="number" class="form-control" id="cfg-th-ram" min="10" max="100" step="5">
+            </div>
+
+            <div class="form-group">
+                <label>Seuil d'alerte Température (°C)</label>
+                <input type="number" class="form-control" id="cfg-th-temp" min="30" max="120" step="5">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span style="font-size: 13px; color: var(--text-primary);">Notifications Bureau (Desktop)</span>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-notif-enabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; color: var(--text-primary);">Alertes Sonores (Web Audio Synth)</span>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-sound-enabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>URL Webhook Discord / Slack / Telegram (Optionnel)</label>
+                <input type="url" class="form-control" id="cfg-webhook-url" placeholder="https://discord.com/api/webhooks/...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                <button class="btn-action" onclick="closeSettingsModal()">Annuler</button>
+                <button class="btn-action" style="background: var(--accent-cyan); color: #000; font-weight: 600;" onclick="saveSettingsForm()">Enregistrer</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Init Lucide Icons
         lucide.createIcons();
 
-        // Helpers for sizes and formatting
         function formatBytes(bytes, decimals = 1) {
             if (bytes === 0) return '0 B';
             const k = 1024;
@@ -728,17 +1033,23 @@
             return (bytesPerSec / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
         }
 
+        // --- GLOBAL STATE ---
+        let currentSettings = {};
+        let rawHistoryData = []; // Full history from server
+        let currentTimeframeSeconds = 60;
+        let activeProcTab = 'cpu';
+        let latestProcessesData = { top_cpu: [], top_ram: [] };
+        let audioCtx = null;
+        let lastAudioBeepTime = 0;
+
         // --- CHART SETUP ---
         const ctx = document.getElementById('history-chart').getContext('2d');
-        const maxDataPoints = 60;
-        const labels = Array.from({length: maxDataPoints}, (_, i) => i - maxDataPoints + 1 + 's');
-        
         const chartData = {
-            labels: labels,
+            labels: [],
             datasets: [
                 {
                     label: 'CPU (%)',
-                    data: Array(maxDataPoints).fill(0),
+                    data: [],
                     borderColor: '#06b6d4',
                     borderWidth: 2,
                     tension: 0.3,
@@ -748,7 +1059,7 @@
                 },
                 {
                     label: 'RAM (%)',
-                    data: Array(maxDataPoints).fill(0),
+                    data: [],
                     borderColor: '#a855f7',
                     borderWidth: 2,
                     tension: 0.3,
@@ -758,7 +1069,7 @@
                 },
                 {
                     label: 'Température CPU (°C)',
-                    data: Array(maxDataPoints).fill(0),
+                    data: [],
                     borderColor: '#ef4444',
                     borderWidth: 1.5,
                     borderDash: [5, 5],
@@ -769,53 +1080,33 @@
             ]
         };
 
-        const chartConfig = {
+        const historyChart = new Chart(ctx, {
             type: 'line',
             data: chartData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 0 // No animation on live updates for performance
-                },
+                animation: { duration: 0 },
                 scales: {
                     x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.03)'
-                        },
-                        ticks: {
-                            color: '#6b7280',
-                            font: { family: 'Outfit', size: 10 }
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                        ticks: { color: '#6b7280', font: { family: 'Outfit', size: 10 }, maxTicksLimit: 12 }
                     },
                     y: {
                         min: 0,
                         max: 100,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: '#6b7280',
-                            font: { family: 'Outfit', size: 10 }
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#6b7280', font: { family: 'Outfit', size: 10 } }
                     }
                 },
                 plugins: {
-                    legend: {
-                        labels: {
-                            color: '#f3f4f6',
-                            font: { family: 'Outfit', size: 12, weight: 500 }
-                        }
-                    }
+                    legend: { labels: { color: '#f3f4f6', font: { family: 'Outfit', size: 12, weight: 500 } } }
                 }
             }
-        };
+        });
 
-        const historyChart = new Chart(ctx, chartConfig);
-
-        // Uptime counter state
+        // Uptime counter
         let appStartTime = null;
-
         function updateUptime(timestamp) {
             if (!appStartTime) appStartTime = timestamp;
             const diff = Math.floor(timestamp - appStartTime);
@@ -825,11 +1116,11 @@
             document.getElementById('uptime-display').textContent = `Temps d'activité: ${hrs}:${mins}:${secs}`;
         }
 
-        // --- WEBSOCKET CONNECTION ---
+        // --- WEBSOCKET ---
         let ws;
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
-        
+
         function connect() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -842,41 +1133,80 @@
             ws.onopen = () => {
                 statusDot.className = 'pulse-dot';
                 statusText.textContent = 'Connecté';
+                // Demand history on open
+                ws.send(JSON.stringify({ type: 'get_history' }));
             };
             
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                updateUI(data);
+                if (data.type === 'history_response') {
+                    rawHistoryData = data.history || [];
+                    renderHistoryChart();
+                } else if (data.type === 'kill_result') {
+                    alert(data.message);
+                } else {
+                    updateUI(data);
+                }
             };
             
             ws.onclose = () => {
                 statusDot.className = 'pulse-dot disconnected';
                 statusText.textContent = 'Déconnecté';
-                // Try reconnect in 3s
                 setTimeout(connect, 3000);
             };
         }
 
-        // Update Dashboard Elements
+        // Play subtle dual-tone alert beep
+        function playAlertSound() {
+            if (!currentSettings.sound_enabled) return;
+            const now = Date.now();
+            if (now - lastAudioBeepTime < 10000) return; // Beep at most every 10s
+            lastAudioBeepTime = now;
+
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.15); // A4
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } catch (e) {}
+        }
+
         function updateUI(metrics) {
             updateUptime(metrics.timestamp);
-            
-            // Sync notification toggle from backend
-            if (metrics.notifications_enabled !== undefined) {
-                const toggle = document.getElementById('notif-toggle');
-                if (toggle.checked !== metrics.notifications_enabled) {
-                    toggle.checked = metrics.notifications_enabled;
-                    updateNotificationIcon(metrics.notifications_enabled);
-                }
+
+            // System Info Header
+            if (metrics.system) {
+                document.getElementById('sys-hostname').textContent = metrics.system.hostname || '--';
+                document.getElementById('sys-kernel').textContent = metrics.system.kernel || '--';
+                document.getElementById('sys-cpumodel').textContent = metrics.system.cpu_model || '--';
             }
-            
-            // 1. CPU
+            if (metrics.load_avg) {
+                document.getElementById('sys-loadavg').textContent = `${metrics.load_avg[0].toFixed(2)}, ${metrics.load_avg[1].toFixed(2)}, ${metrics.load_avg[2].toFixed(2)}`;
+            }
+            if (metrics.battery) {
+                document.getElementById('battery-item').style.display = 'flex';
+                document.getElementById('sys-battery').textContent = `${metrics.battery.percent}% (${metrics.battery.power_plugged ? 'Secteur' : 'Batterie'})`;
+            }
+
+            // Sync Settings
+            if (metrics.settings) {
+                currentSettings = metrics.settings;
+            }
+
+            // CPU
             const cpuUsage = metrics.cpu.usage;
             document.getElementById('cpu-val').textContent = `${cpuUsage.toFixed(1)}%`;
             document.getElementById('cpu-bar').style.width = `${cpuUsage}%`;
             document.getElementById('cpu-cores-count').textContent = `Cœurs: ${metrics.cpu.count}`;
             
-            // Cores visualization
             const coresContainer = document.getElementById('cores-container');
             if (coresContainer.children.length !== metrics.cpu.cores.length) {
                 coresContainer.innerHTML = '';
@@ -897,28 +1227,20 @@
                 const bar = document.getElementById(`core-bar-${idx}`);
                 if (bar) {
                     bar.style.height = `${coreVal}%`;
-                    if (coreVal > 90) {
-                        bar.style.background = 'var(--accent-red)';
-                    } else if (coreVal > 70) {
-                        bar.style.background = 'var(--accent-amber)';
-                    } else {
-                        bar.style.background = 'var(--accent-cyan)';
-                    }
+                    bar.style.background = coreVal > 90 ? 'var(--accent-red)' : (coreVal > 70 ? 'var(--accent-amber)' : 'var(--accent-cyan)');
                 }
             });
 
-            // 2. RAM
+            // RAM
             const ram = metrics.ram;
             document.getElementById('ram-val').textContent = `${ram.percent.toFixed(1)}%`;
             document.getElementById('ram-bar').style.width = `${ram.percent}%`;
             document.getElementById('ram-used-text').textContent = `${formatBytes(ram.used)} utilisés`;
             document.getElementById('ram-total-text').textContent = `Total: ${formatBytes(ram.total)}`;
             document.getElementById('ram-free-val').textContent = formatBytes(ram.free);
-
-            // Swap/Cache computation or display
             document.getElementById('ram-swap-val').textContent = formatBytes(ram.total - ram.used - ram.free);
 
-            // 3. Temperatures
+            // Temperatures
             const temps = metrics.temperatures;
             if (temps.cpu !== null) {
                 document.getElementById('temp-val').textContent = `${temps.cpu.toFixed(0)}°C`;
@@ -927,129 +1249,249 @@
                 document.getElementById('temp-val').textContent = `--`;
                 document.getElementById('temp-cpu-val').textContent = `N/A`;
             }
-            
-            if (temps.gpu !== null) {
-                document.getElementById('temp-gpu-val').textContent = `${temps.gpu.toFixed(1)}°C`;
-            } else {
-                document.getElementById('temp-gpu-val').textContent = `N/A`;
-            }
+            document.getElementById('temp-gpu-val').textContent = temps.gpu !== null ? `${temps.gpu.toFixed(1)}°C` : `N/A`;
 
-            // 4. Disk list & partition display
+            // Storage Partitions
             const partitionList = document.getElementById('partition-list');
             partitionList.innerHTML = '';
-            
             metrics.disks.forEach((disk) => {
-                const partitionItem = document.createElement('div');
-                partitionItem.className = 'partition-item';
-                partitionItem.innerHTML = `
-                    <div class="partition-meta">
-                        <span class="partition-mount">${disk.mountpoint} (${disk.fstype})</span>
-                        <span class="partition-usage">${disk.percent}%</span>
-                    </div>
-                    <div class="partition-bar-container">
-                        <div class="partition-bar" style="width: ${disk.percent}%; background: ${disk.percent > 90 ? 'var(--accent-red)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)'}"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-                        <span>Libre: ${formatBytes(disk.free)}</span>
-                        <span>Total: ${formatBytes(disk.total)}</span>
+                partitionList.innerHTML += `
+                    <div class="partition-item">
+                        <div class="partition-meta">
+                            <span>${disk.mountpoint} (${disk.fstype})</span>
+                            <span>${disk.percent}%</span>
+                        </div>
+                        <div class="partition-bar-container">
+                            <div class="partition-bar" style="width: ${disk.percent}%; background: ${disk.percent > 90 ? 'var(--accent-red)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)'}"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                            <span>Libre: ${formatBytes(disk.free)}</span>
+                            <span>Total: ${formatBytes(disk.total)}</span>
+                        </div>
                     </div>
                 `;
-                partitionList.appendChild(partitionItem);
             });
-            
-            // Disk Speed
+
+            // Speeds
             document.getElementById('disk-read-val').textContent = formatSpeed(metrics.disk_io.read_speed);
             document.getElementById('disk-write-val').textContent = formatSpeed(metrics.disk_io.write_speed);
-
-            // 5. Network Speed
             document.getElementById('net-in-val').textContent = formatSpeed(metrics.net_io.bytes_recv_speed);
             document.getElementById('net-out-val').textContent = formatSpeed(metrics.net_io.bytes_sent_speed);
 
-            // --- ALERTS HIGHLIGHTS ---
-            const thresholds = metrics.thresholds;
+            // Processes
+            if (metrics.processes) {
+                latestProcessesData = metrics.processes;
+                renderProcessesTable();
+            }
+
+            // Alerts & Threshold Check
+            const th_cpu = currentSettings.threshold_cpu || 90.0;
+            const th_ram = currentSettings.threshold_ram || 95.0;
+            const th_temp = currentSettings.threshold_temp || 80.0;
             let activeAlertMessages = [];
-            
-            // CPU alert status
-            const cpuCard = document.getElementById('cpu-card');
-            if (cpuUsage > thresholds.cpu_usage) {
-                cpuCard.classList.add('threshold-exceeded');
-                activeAlertMessages.push(`CPU critique (${cpuUsage.toFixed(1)}% > ${thresholds.cpu_usage}%)`);
-            } else {
-                cpuCard.classList.remove('threshold-exceeded');
-            }
 
-            // RAM alert status
-            const ramCard = document.getElementById('ram-card');
-            if (ram.percent > thresholds.ram_usage) {
-                ramCard.classList.add('threshold-exceeded');
-                activeAlertMessages.push(`RAM critique (${ram.percent.toFixed(1)}% > ${thresholds.ram_usage}%)`);
-            } else {
-                ramCard.classList.remove('threshold-exceeded');
-            }
+            const toggleCard = (id, cond) => {
+                const el = document.getElementById(id);
+                if (cond) el.classList.add('threshold-exceeded');
+                else el.classList.remove('threshold-exceeded');
+            };
 
-            // Temperature alert status
-            const tempCard = document.getElementById('temp-card');
-            if (temps.cpu !== null && temps.cpu > thresholds.cpu_temp) {
-                tempCard.classList.add('threshold-exceeded');
-                activeAlertMessages.push(`Température CPU critique (${temps.cpu.toFixed(1)}°C > ${thresholds.cpu_temp}°C)`);
-            } else {
-                tempCard.classList.remove('threshold-exceeded');
-            }
+            const cpuAlert = cpuUsage > th_cpu;
+            toggleCard('cpu-card', cpuAlert);
+            if (cpuAlert) activeAlertMessages.push(`CPU critique (${cpuUsage.toFixed(1)}% > ${th_cpu}%)`);
 
-            // Display alert banner
+            const ramAlert = ram.percent > th_ram;
+            toggleCard('ram-card', ramAlert);
+            if (ramAlert) activeAlertMessages.push(`RAM critique (${ram.percent.toFixed(1)}% > ${th_ram}%)`);
+
+            const tempAlert = temps.cpu !== null && temps.cpu > th_temp;
+            toggleCard('temp-card', tempAlert);
+            if (tempAlert) activeAlertMessages.push(`Température critique (${temps.cpu.toFixed(1)}°C > ${th_temp}°C)`);
+
             const alertBanner = document.getElementById('alert-banner');
-            const alertMsg = document.getElementById('alert-message');
             if (activeAlertMessages.length > 0) {
                 alertBanner.style.display = 'flex';
-                alertMsg.textContent = `Alerte Système : ${activeAlertMessages.join(' | ')}`;
+                document.getElementById('alert-message').textContent = `Alerte Système : ${activeAlertMessages.join(' | ')}`;
+                playAlertSound();
             } else {
                 alertBanner.style.display = 'none';
             }
 
-            // --- HISTORICAL CHART UPDATE ---
-            // Shift datasets left and push new values
-            const cpuDataset = historyChart.data.datasets[0].data;
-            cpuDataset.shift();
-            cpuDataset.push(cpuUsage);
-
-            const ramDataset = historyChart.data.datasets[1].data;
-            ramDataset.shift();
-            ramDataset.push(ram.percent);
-
-            const tempDataset = historyChart.data.datasets[2].data;
-            tempDataset.shift();
-            tempDataset.push(temps.cpu !== null ? temps.cpu : 0);
-
-            historyChart.update('none'); // Update immediately without full redraw animations for raw speed
+            // Add point to raw History array and update Chart
+            rawHistoryData.push({
+                timestamp: metrics.timestamp,
+                cpu: cpuUsage,
+                ram: ram.percent,
+                temp: temps.cpu !== null ? temps.cpu : 0.0
+            });
+            if (rawHistoryData.length > 3600) rawHistoryData.shift();
+            
+            renderHistoryChart();
         }
 
-        // Toggle event listener
-        const notifToggle = document.getElementById('notif-toggle');
-        const notifIcon = document.getElementById('notif-icon');
+        // Render Top Processes Table
+        function renderProcessesTable() {
+            const body = document.getElementById('proc-table-body');
+            body.innerHTML = '';
+            const list = activeProcTab === 'cpu' ? latestProcessesData.top_cpu : latestProcessesData.top_ram;
+            
+            if (!list || list.length === 0) {
+                body.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Aucune donnée de processus disponible</td></tr>`;
+                return;
+            }
 
-        notifToggle.addEventListener('change', () => {
-            const enabled = notifToggle.checked;
-            updateNotificationIcon(enabled);
+            list.forEach(p => {
+                body.innerHTML += `
+                    <tr>
+                        <td><strong>${p.pid}</strong></td>
+                        <td>${p.name}</td>
+                        <td>${p.username}</td>
+                        <td><span style="color: ${p.cpu_percent > 50 ? 'var(--accent-red)' : 'var(--text-primary)'}">${p.cpu_percent}%</span></td>
+                        <td>${formatBytes(p.ram_bytes)} (${p.ram_percent}%)</td>
+                        <td>
+                            <button class="btn-kill" onclick="confirmKillProcess(${p.pid}, '${p.name}')">Terminer</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function switchProcTab(tab) {
+            activeProcTab = tab;
+            document.getElementById('tab-btn-cpu').className = tab === 'cpu' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-btn-ram').className = tab === 'ram' ? 'tab-btn active' : 'tab-btn';
+            renderProcessesTable();
+        }
+
+        function confirmKillProcess(pid, name) {
+            if (confirm(`Voulez-vous vraiment fermer le processus "${name}" (PID: ${pid}) ?`)) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'kill_process', pid: pid }));
+                }
+            }
+        }
+
+        // Chart Timeframe Switcher
+        function setTimeframe(seconds, id) {
+            currentTimeframeSeconds = seconds;
+            ['1m', '5m', '15m', '1h'].forEach(tf => {
+                const btn = document.getElementById(`tf-${tf}`);
+                if (btn) btn.className = tf === id ? 'tf-btn active' : 'tf-btn';
+            });
+            renderHistoryChart();
+        }
+
+        function renderHistoryChart() {
+            if (rawHistoryData.length === 0) return;
+            const now = rawHistoryData[rawHistoryData.length - 1].timestamp;
+            const filtered = rawHistoryData.filter(pt => (now - pt.timestamp) <= currentTimeframeSeconds);
+
+            const labels = filtered.map(pt => {
+                const d = new Date(pt.timestamp * 1000);
+                return d.toLocaleTimeString('fr-FR', { minute: '2-digit', second: '2-digit' });
+            });
+
+            const cpuVals = filtered.map(pt => pt.cpu);
+            const ramVals = filtered.map(pt => pt.ram);
+            const tempVals = filtered.map(pt => pt.temp);
+
+            historyChart.data.labels = labels;
+            historyChart.data.datasets[0].data = cpuVals;
+            historyChart.data.datasets[1].data = ramVals;
+            historyChart.data.datasets[2].data = tempVals;
+            historyChart.update('none');
+
+            // Calculate Stats (Min / Avg / Max)
+            const calcStats = arr => {
+                if (arr.length === 0) return '-- / -- / --';
+                const min = Math.min(...arr).toFixed(1);
+                const max = Math.max(...arr).toFixed(1);
+                const avg = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+                return `${min}% / ${avg}% / ${max}%`;
+            };
+
+            const calcTempStats = arr => {
+                if (arr.length === 0) return '-- / -- / --';
+                const valid = arr.filter(v => v > 0);
+                if (valid.length === 0) return '-- / -- / --';
+                const min = Math.min(...valid).toFixed(0);
+                const max = Math.max(...valid).toFixed(0);
+                const avg = (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(0);
+                return `${min}°C / ${avg}°C / ${max}°C`;
+            };
+
+            document.getElementById('stat-cpu').textContent = calcStats(cpuVals);
+            document.getElementById('stat-ram').textContent = calcStats(ramVals);
+            document.getElementById('stat-temp').textContent = calcTempStats(tempVals);
+        }
+
+        // Export Data
+        function exportData(format) {
+            if (rawHistoryData.length === 0) {
+                alert("Aucune donnée disponible à exporter.");
+                return;
+            }
+
+            let content = "", mimeType = "", filename = "";
+            const now = new Date().toISOString().slice(0,19).replace(/[:T]/g, "-");
+
+            if (format === 'csv') {
+                mimeType = 'text/csv;charset=utf-8;';
+                filename = `monitoring_metrics_${now}.csv`;
+                content = "Timestamp,ISO_Time,CPU_Usage_Percent,RAM_Usage_Percent,CPU_Temp_Celsius\n";
+                rawHistoryData.forEach(pt => {
+                    const iso = new Date(pt.timestamp * 1000).toISOString();
+                    content += `${pt.timestamp},${iso},${pt.cpu},${pt.ram},${pt.temp}\n`;
+                });
+            } else {
+                mimeType = 'application/json;charset=utf-8;';
+                filename = `monitoring_metrics_${now}.json`;
+                content = JSON.stringify(rawHistoryData, null, 2);
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // Modal Settings Controls
+        function openSettingsModal() {
+            document.getElementById('cfg-th-cpu').value = currentSettings.threshold_cpu || 90;
+            document.getElementById('cfg-th-ram').value = currentSettings.threshold_ram || 95;
+            document.getElementById('cfg-th-temp').value = currentSettings.threshold_temp || 80;
+            document.getElementById('cfg-notif-enabled').checked = currentSettings.notifications_enabled !== false;
+            document.getElementById('cfg-sound-enabled').checked = currentSettings.sound_enabled !== false;
+            document.getElementById('cfg-webhook-url').value = currentSettings.webhook_url || '';
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function saveSettingsForm() {
+            const newSettings = {
+                threshold_cpu: parseFloat(document.getElementById('cfg-th-cpu').value) || 90.0,
+                threshold_ram: parseFloat(document.getElementById('cfg-th-ram').value) || 95.0,
+                threshold_temp: parseFloat(document.getElementById('cfg-th-temp').value) || 80.0,
+                notifications_enabled: document.getElementById('cfg-notif-enabled').checked,
+                sound_enabled: document.getElementById('cfg-sound-enabled').checked,
+                webhook_url: document.getElementById('cfg-webhook-url').value.trim()
+            };
+
+            currentSettings = newSettings;
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
-                    type: 'toggle_notifications',
-                    enabled: enabled
+                    type: 'update_settings',
+                    settings: newSettings
                 }));
             }
-        });
 
-        function updateNotificationIcon(enabled) {
-            if (enabled) {
-                notifIcon.setAttribute('data-lucide', 'bell');
-                notifIcon.style.color = 'var(--accent-cyan)';
-            } else {
-                notifIcon.setAttribute('data-lucide', 'bell-off');
-                notifIcon.style.color = 'var(--text-secondary)';
-            }
-            lucide.createIcons();
+            closeSettingsModal();
         }
 
-        // Start Connection
         connect();
     </script>
 </body>
