@@ -30,7 +30,9 @@ DEFAULT_SETTINGS = {
     "webhook_url": ""
 }
 
-# --- SQLITE DATABASE MANAGER ---
+# --- SQLITE DATABASE MANAGER (BATCHED) ---
+sqlite_write_buffer = []
+
 def init_db():
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -49,25 +51,32 @@ def init_db():
         print(f"[ERREUR] Échec initialisation SQLite: {e}")
 
 def save_metric_to_db(ts: float, cpu: float, ram: float, temp: float):
+    sqlite_write_buffer.append((ts, cpu, ram, temp))
+    if len(sqlite_write_buffer) >= 5:
+        flush_db_buffer()
+
+def flush_db_buffer():
+    global sqlite_write_buffer
+    if not sqlite_write_buffer:
+        return
     try:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.executemany("""
             INSERT OR REPLACE INTO metrics_history (timestamp, cpu, ram, temp)
             VALUES (?, ?, ?, ?)
-        """, (ts, cpu, ram, temp))
-        
-        # Purge entries older than 7 days (604 800 seconds)
-        cutoff = ts - 604800
+        """, sqlite_write_buffer)
+        cutoff = time.time() - 604800
         cursor.execute("DELETE FROM metrics_history WHERE timestamp < ?", (cutoff,))
-        
         conn.commit()
         conn.close()
+        sqlite_write_buffer.clear()
     except Exception as e:
         print(f"[ERREUR] Échec écriture SQLite: {e}")
 
 def get_history_from_db(hours: float = 24.0) -> List[dict]:
     try:
+        flush_db_buffer()
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
         cutoff = time.time() - (hours * 3600)
@@ -251,7 +260,16 @@ def check_alerts(metrics: dict):
             send_webhook_alert("Alerte Température Critique", msg)
             last_notified["cpu_temp"] = now
 
+# --- CACHED HEAVY METRICS TO MINIMIZE CPU IMPACT ---
+last_proc_check = 0.0
+cached_top_processes = {"top_cpu": [], "top_ram": []}
+
 def get_top_processes() -> dict:
+    global last_proc_check, cached_top_processes
+    now = time.time()
+    if now - last_proc_check < 5.0 and cached_top_processes["top_cpu"]:
+        return cached_top_processes
+
     procs = []
     for p in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent', 'memory_info']):
         try:
@@ -273,38 +291,58 @@ def get_top_processes() -> dict:
         "ram_bytes": p['memory_bytes']
     }
     
-    return {
+    cached_top_processes = {
         "top_cpu": [format_proc(p) for p in top_cpu],
         "top_ram": [format_proc(p) for p in top_ram]
     }
+    last_proc_check = now
+    return cached_top_processes
+
+last_services_check = 0.0
+cached_services_status = []
 
 def get_systemd_services_status() -> List[dict]:
-    """Inspecte le statut des services systemd clés."""
+    """Inspecte le statut des services systemd (1 seule commande groupée, en cache 10s)."""
+    global last_services_check, cached_services_status
+    now = time.time()
+    if now - last_services_check < 10.0 and cached_services_status:
+        return cached_services_status
+
     target_services = [
         "ssh", "docker", "cups", "cron", "ufw",
         "bluetooth", "avahi-daemon", "systemd-resolved", "network-manager"
     ]
     results = []
-    for service_name in target_services:
-        try:
-            res = subprocess.run(
-                ["systemctl", "is-active", service_name],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=1
-            )
-            st = res.stdout.strip()
-            results.append({
-                "name": service_name,
-                "status": st if st else "unknown"
-            })
-        except Exception:
+    try:
+        res = subprocess.run(
+            ["systemctl", "is-active"] + target_services,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=2
+        )
+        lines = res.stdout.strip().splitlines()
+        for idx, service_name in enumerate(target_services):
+            st = lines[idx].strip() if idx < len(lines) else "unknown"
+            results.append({"name": service_name, "status": st if st else "unknown"})
+    except Exception:
+        for service_name in target_services:
             results.append({"name": service_name, "status": "unknown"})
+
+    cached_services_status = results
+    last_services_check = now
     return results
 
+last_ports_check = 0.0
+cached_open_ports = []
+
 def get_open_ports() -> List[dict]:
-    """Inspecte les ports réseau locaux en écoute (LISTEN)."""
+    """Inspecte les ports réseau locaux en écoute (en cache 5s)."""
+    global last_ports_check, cached_open_ports
+    now = time.time()
+    if now - last_ports_check < 5.0 and cached_open_ports:
+        return cached_open_ports
+
     open_ports = []
     try:
         conns = psutil.net_connections(kind='inet')
@@ -328,9 +366,10 @@ def get_open_ports() -> List[dict]:
     except Exception as e:
         print(f"[ATTENTION] Erreur lecture ports: {e}")
         
-    # Trier par numéro de port
     open_ports.sort(key=lambda x: x["port"])
-    return open_ports[:15] # Limiter aux 15 premiers pour l'UI
+    cached_open_ports = open_ports[:15]
+    last_ports_check = now
+    return cached_open_ports
 
 def get_battery_info() -> Optional[dict]:
     try:
@@ -438,7 +477,6 @@ def collect_metrics_data() -> dict:
         "settings": settings
     }
     
-    # Store point in memory buffer
     history_buffer.append({
         "timestamp": now,
         "cpu": cpu_usage,
@@ -446,7 +484,6 @@ def collect_metrics_data() -> dict:
         "temp": cpu_temp if cpu_temp is not None else 0.0
     })
     
-    # Store point in SQLite DB
     save_metric_to_db(now, cpu_usage, ram.percent, cpu_temp if cpu_temp is not None else 0.0)
     
     return metrics
@@ -475,11 +512,14 @@ async def metrics_collector_loop():
 
 @app.on_event("startup")
 async def startup_event():
-    # Load initial history from SQLite DB into memory buffer
     db_hist = get_history_from_db(hours=1.0)
     for p in db_hist:
         history_buffer.append(p)
     asyncio.create_task(metrics_collector_loop())
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    flush_db_buffer()
 
 @app.get("/", response_class=HTMLResponse)
 async def get_dashboard():
@@ -492,7 +532,6 @@ async def get_dashboard():
     except Exception as e:
         return HTMLResponse(content=f"<h1>Erreur serveur</h1><p>{str(e)}</p>", status_code=500)
 
-# --- PWA ENDPOINTS ---
 @app.get("/manifest.json")
 async def get_manifest():
     return FileResponse(os.path.join(BASE_DIR, "manifest.json"), media_type="application/json")
@@ -586,6 +625,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         p.terminate()
                         result["success"] = True
                         result["message"] = f"Le processus {p.name()} (PID {pid}) a été arrêté avec succès."
+                        # Forcer le rafraîchissement immédiat du cache processus
+                        global last_proc_check
+                        last_proc_check = 0.0
                     except psutil.NoSuchProcess:
                         result["message"] = f"Le processus PID {pid} n'existe plus."
                     except psutil.AccessDenied:

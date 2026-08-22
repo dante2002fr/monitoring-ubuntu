@@ -1,1 +1,8 @@
-{"notifications_enabled": false}
+{
+  "notifications_enabled": true,
+  "sound_enabled": false,
+  "threshold_cpu": 90,
+  "threshold_ram": 95,
+  "threshold_temp": 80,
+  "webhook_url": ""
+}
