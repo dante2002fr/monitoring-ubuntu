@@ -317,6 +317,7 @@
         
         .temp-card .card-icon { color: var(--accent-amber); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.2)); }
         .net-card .card-icon { color: var(--accent-green); filter: drop-shadow(0 0 6px var(--glow-green)); }
+        .fan-card .card-icon { color: var(--accent-cyan); filter: drop-shadow(0 0 6px var(--glow-cyan)); }
 
         .card.threshold-exceeded {
             border-color: rgba(239, 68, 68, 0.4);
@@ -383,6 +384,71 @@
         .submetric-item { display: flex; flex-direction: column; }
         .submetric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
         .submetric-value { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+        /* Fans Grid */
+        .fans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .fan-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .fan-rpm {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 6px;
+        }
+
+        .fan-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fan-icon-spin {
+            animation: spin 2s linear infinite;
+            color: var(--accent-cyan);
+        }
+
+        /* Per-NIC List */
+        .nic-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 14px;
+        }
+
+        .nic-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
 
         /* Systemd Services & Ports Grid */
         .supervision-grid {
@@ -523,6 +589,39 @@
 
         .btn-kill:hover { background: rgba(239, 68, 68, 0.3); color: #ffffff; }
 
+        /* System Journal Logs Terminal Card */
+        .log-console {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 14px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 240px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .log-line {
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+            line-height: 1.4;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+
+        .log-msg {
+            color: #e5e7eb;
+            word-break: break-all;
+        }
+
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -608,6 +707,10 @@
             <div class="sys-info-item">
                 <i data-lucide="gauge" style="width: 16px; height: 16px; color: var(--accent-amber);"></i>
                 <span>Load Avg: <strong id="sys-loadavg">--</strong></span>
+            </div>
+            <div class="sys-info-item">
+                <i data-lucide="wifi" style="width: 16px; height: 16px; color: var(--accent-green);" id="ping-icon"></i>
+                <span>Latence: <strong id="sys-ping">-- ms</strong></span>
             </div>
             <div class="sys-info-item" id="battery-item" style="display: none;">
                 <i data-lucide="battery-charging" style="width: 16px; height: 16px; color: var(--accent-green);" id="batt-icon"></i>
@@ -695,6 +798,20 @@
                 </div>
             </div>
 
+            <!-- Fans RPM Card -->
+            <div class="card fan-card" id="fan-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="fan" class="card-icon fan-icon-spin"></i>
+                        <span>Ventilateurs (RPM)</span>
+                    </div>
+                </div>
+                <div class="card-value" id="fan-main-val">-- RPM</div>
+                <div class="fans-container" id="fans-container">
+                    <!-- Dynamic fan items -->
+                </div>
+            </div>
+
             <!-- Storage Card -->
             <div class="card disk-card" id="disk-card">
                 <div class="card-header">
@@ -721,22 +838,39 @@
                 <div class="card-header">
                     <div class="card-title">
                         <i data-lucide="wifi" class="card-icon"></i>
-                        <span>Débits Réseau</span>
+                        <span>Réseau & Débits</span>
                     </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
+                
+                <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span style="font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="arrow-down" style="color: var(--accent-green); width: 16px; height: 16px;"></i> Téléchargement (IN)
+                            <i data-lucide="arrow-down" style="color: var(--accent-green); width: 16px; height: 16px;"></i> Débit IN
                         </span>
-                        <span class="card-value" style="font-size: 24px; margin-bottom: 0;" id="net-in-val">0 KB/s</span>
+                        <span class="card-value" style="font-size: 22px; margin-bottom: 0;" id="net-in-val">0 KB/s</span>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span style="font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="arrow-up" style="color: var(--accent-cyan); width: 16px; height: 16px;"></i> Téléversement (OUT)
+                            <i data-lucide="arrow-up" style="color: var(--accent-cyan); width: 16px; height: 16px;"></i> Débit OUT
                         </span>
-                        <span class="card-value" style="font-size: 24px; margin-bottom: 0;" id="net-out-val">0 KB/s</span>
+                        <span class="card-value" style="font-size: 22px; margin-bottom: 0;" id="net-out-val">0 KB/s</span>
                     </div>
+                </div>
+
+                <div class="submetrics" style="margin-top: 12px; padding-top: 12px;">
+                    <div class="submetric-item">
+                        <span class="submetric-label">Total Reçu (Session)</span>
+                        <span class="submetric-value" id="net-total-recv">0 MB</span>
+                    </div>
+                    <div class="submetric-item">
+                        <span class="submetric-label">Total Envoyé (Session)</span>
+                        <span class="submetric-value" id="net-total-sent">0 MB</span>
+                    </div>
+                </div>
+
+                <!-- Per-interface list -->
+                <div class="nic-list" id="nic-list">
+                    <!-- Dynamic per-NIC items -->
                 </div>
             </div>
         </div>
@@ -751,9 +885,7 @@
                         <span>Services Systemd Clés</span>
                     </div>
                 </div>
-                <div class="service-badge-list" id="services-badge-list">
-                    <!-- Dynamic service items -->
-                </div>
+                <div class="service-badge-list" id="services-badge-list"></div>
             </div>
 
             <!-- Open Ports Card -->
@@ -774,11 +906,24 @@
                                 <th>PID</th>
                             </tr>
                         </thead>
-                        <tbody id="ports-table-body">
-                            <!-- Dynamic ports -->
-                        </tbody>
+                        <tbody id="ports-table-body"></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- System Journal Logs Terminal Card -->
+        <div class="proc-card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="card-title">
+                    <i data-lucide="file-text" class="card-icon" style="color: var(--accent-amber);"></i>
+                    <span>Logs Système en Direct (Journald - Erreurs & Alertes)</span>
+                </div>
+                <input type="text" id="log-filter-input" placeholder="Filtrer les logs..." class="form-control" style="max-width: 240px; padding: 6px 12px; font-size: 12px;" oninput="filterLogs()">
+            </div>
+            
+            <div class="log-console" id="log-console">
+                <div style="color: var(--text-secondary); text-align: center;">Chargement des journaux système...</div>
             </div>
         </div>
 
@@ -808,9 +953,7 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="proc-table-body">
-                        <!-- Dynamic rows -->
-                    </tbody>
+                    <tbody id="proc-table-body"></tbody>
                 </table>
             </div>
         </div>
@@ -947,6 +1090,7 @@
         let currentTimeframeSeconds = 60;
         let activeProcTab = 'cpu';
         let latestProcessesData = { top_cpu: [], top_ram: [] };
+        let latestRawLogs = [];
         let audioCtx = null;
         let lastAudioBeepTime = 0;
 
@@ -1098,6 +1242,26 @@
                 document.getElementById('sys-battery').textContent = `${metrics.battery.percent}% (${metrics.battery.power_plugged ? 'Secteur' : 'Batterie'})`;
             }
 
+            // Latency / Ping
+            const pingEl = document.getElementById('sys-ping');
+            const pingIcon = document.getElementById('ping-icon');
+            if (metrics.ping_ms !== undefined && metrics.ping_ms !== null) {
+                pingEl.textContent = `${metrics.ping_ms} ms`;
+                if (metrics.ping_ms < 30) {
+                    pingEl.style.color = 'var(--accent-green)';
+                    pingIcon.style.color = 'var(--accent-green)';
+                } else if (metrics.ping_ms < 80) {
+                    pingEl.style.color = 'var(--accent-amber)';
+                    pingIcon.style.color = 'var(--accent-amber)';
+                } else {
+                    pingEl.style.color = 'var(--accent-red)';
+                    pingIcon.style.color = 'var(--accent-red)';
+                }
+            } else {
+                pingEl.textContent = '-- ms';
+                pingEl.style.color = 'var(--text-secondary)';
+            }
+
             if (metrics.settings) {
                 currentSettings = metrics.settings;
             }
@@ -1152,6 +1316,27 @@
             }
             document.getElementById('temp-gpu-val').textContent = temps.gpu !== null ? `${temps.gpu.toFixed(1)}°C` : `N/A`;
 
+            // Fans
+            const fans = metrics.fans || [];
+            const fanContainer = document.getElementById('fans-container');
+            const fanMainVal = document.getElementById('fan-main-val');
+            if (fans.length > 0) {
+                fanMainVal.textContent = `${fans[0].rpm} RPM`;
+                fanContainer.innerHTML = '';
+                fans.forEach(f => {
+                    fanContainer.innerHTML += `
+                        <div class="fan-item">
+                            <i data-lucide="fan" class="fan-icon-spin" style="width: 18px; height: 18px;"></i>
+                            <div class="fan-rpm">${f.rpm}</div>
+                            <div class="fan-label">${f.label}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                fanMainVal.textContent = `N/A`;
+                fanContainer.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-secondary); font-size: 12px; text-align: center;">Aucun capteur RPM actif</div>`;
+            }
+
             // Storage Partitions
             const partitionList = document.getElementById('partition-list');
             partitionList.innerHTML = '';
@@ -1178,6 +1363,30 @@
             document.getElementById('disk-write-val').textContent = formatSpeed(metrics.disk_io.write_speed);
             document.getElementById('net-in-val').textContent = formatSpeed(metrics.net_io.bytes_recv_speed);
             document.getElementById('net-out-val').textContent = formatSpeed(metrics.net_io.bytes_sent_speed);
+
+            // Cumulative Data
+            document.getElementById('net-total-recv').textContent = formatBytes(metrics.net_io.total_recv || 0);
+            document.getElementById('net-total-sent').textContent = formatBytes(metrics.net_io.total_sent || 0);
+
+            // Per-NIC list
+            const nicList = document.getElementById('nic-list');
+            nicList.innerHTML = '';
+            if (metrics.net_io.interfaces && metrics.net_io.interfaces.length > 0) {
+                metrics.net_io.interfaces.forEach(nic => {
+                    nicList.innerHTML += `
+                        <div class="nic-item">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <strong style="color: var(--accent-cyan);">${nic.name}</strong>
+                                <span style="font-size: 10px; color: var(--text-secondary);">(${nic.type})</span>
+                            </div>
+                            <div style="display: flex; gap: 10px; font-family: 'Space Grotesk';">
+                                <span style="color: var(--accent-green);">↓ ${formatSpeed(nic.recv_speed)}</span>
+                                <span style="color: var(--accent-cyan);">↑ ${formatSpeed(nic.sent_speed)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
 
             // Systemd Services
             if (metrics.services) {
@@ -1207,6 +1416,12 @@
                         </tr>
                     `;
                 });
+            }
+
+            // Journald Logs
+            if (metrics.logs) {
+                latestRawLogs = metrics.logs;
+                renderLogs(latestRawLogs);
             }
 
             // Top Processes
@@ -1257,6 +1472,35 @@
             });
             
             renderHistoryChart();
+            lucide.createIcons();
+        }
+
+        function renderLogs(logs) {
+            const consoleEl = document.getElementById('log-console');
+            if (!logs || logs.length === 0) {
+                consoleEl.innerHTML = `<div style="color: var(--accent-green); text-align: center;">Aucun événement d'erreur récent dans journald. Tout est opérationnel !</div>`;
+                return;
+            }
+            consoleEl.innerHTML = '';
+            logs.forEach(l => {
+                const timeClean = l.timestamp ? l.timestamp.split('T')[1] || l.timestamp : '';
+                consoleEl.innerHTML += `
+                    <div class="log-line">
+                        <span class="log-time">[${timeClean}]</span>
+                        <span class="log-msg">${escapeHtml(l.message)}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function filterLogs() {
+            const query = document.getElementById('log-filter-input').value.toLowerCase();
+            const filtered = latestRawLogs.filter(l => l.message.toLowerCase().includes(query) || (l.timestamp && l.timestamp.includes(query)));
+            renderLogs(filtered);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         function renderProcessesTable() {
@@ -1306,7 +1550,6 @@
                 const btn = document.getElementById(`tf-${tf}`);
                 if (btn) btn.className = tf === id ? 'tf-btn active' : 'tf-btn';
             });
-            // Fetch DB history if needed
             if (ws && ws.readyState === WebSocket.OPEN && hoursNeeded > 1) {
                 ws.send(JSON.stringify({ type: 'get_history', hours: hoursNeeded }));
             } else {

@@ -124,6 +124,7 @@ history_buffer: deque = deque(maxlen=3600)
 
 prev_disk_io: Optional[tuple] = None
 prev_net_io: Optional[tuple] = None
+prev_pernic_io: Dict[str, tuple] = {}
 prev_io_time: float = time.time()
 
 speeds = {
@@ -135,6 +136,30 @@ speeds = {
 
 current_metrics: dict = {}
 active_connections: Set[WebSocket] = set()
+
+# Latency / Ping state
+cached_ping_ms: Optional[float] = None
+last_ping_time: float = 0.0
+
+def measure_ping_task():
+    global cached_ping_ms
+    try:
+        res = subprocess.run(
+            ["ping", "-c", "1", "-W", "1", "1.1.1.1"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=2
+        )
+        if res.returncode == 0:
+            for line in res.stdout.splitlines():
+                if "time=" in line:
+                    ms_str = line.split("time=")[1].split(" ")[0].strip()
+                    cached_ping_ms = round(float(ms_str), 1)
+                    return
+        cached_ping_ms = None
+    except Exception:
+        cached_ping_ms = None
 
 def get_cpu_model() -> str:
     try:
@@ -195,6 +220,31 @@ def get_gpu_temp() -> Optional[float]:
     except Exception:
         pass
     return None
+
+def get_fan_speeds() -> List[dict]:
+    """Récupère les capteurs de vitesse des ventilateurs en RPM."""
+    fans_list = []
+    try:
+        fans = psutil.sensors_fans()
+        if fans:
+            for chip, entries in fans.items():
+                for idx, entry in enumerate(entries):
+                    if entry.current > 0:
+                        label = entry.label or f"Fan {idx + 1}"
+                        if "it8628" in chip.lower() and idx == 0:
+                            label = "CPU / Boîtier 1"
+                        elif "it8628" in chip.lower() and idx == 1:
+                            label = "Boîtier 2"
+                        elif "amdgpu" in chip.lower():
+                            label = "GPU AMD"
+                        fans_list.append({
+                            "chip": chip,
+                            "label": label,
+                            "rpm": entry.current
+                        })
+    except Exception:
+        pass
+    return fans_list
 
 def send_webhook_alert(title: str, message: str):
     url = settings.get("webhook_url", "").strip()
@@ -371,6 +421,48 @@ def get_open_ports() -> List[dict]:
     last_ports_check = now
     return cached_open_ports
 
+last_logs_check = 0.0
+cached_system_logs = []
+
+def get_system_journal_logs() -> List[dict]:
+    """Récupère les derniers logs d'erreur/avertissement de journald (en cache 10s)."""
+    global last_logs_check, cached_system_logs
+    now = time.time()
+    if now - last_logs_check < 10.0 and cached_system_logs:
+        return cached_system_logs
+
+    logs = []
+    try:
+        res = subprocess.run(
+            ["journalctl", "-p", "err..warning", "-n", "20", "--no-pager", "-o", "short-iso"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=3
+        )
+        for line in res.stdout.strip().splitlines():
+            line = line.strip()
+            if line:
+                parts = line.split(" ", 2)
+                if len(parts) >= 3:
+                    logs.append({
+                        "timestamp": parts[0],
+                        "host": parts[1],
+                        "message": parts[2]
+                    })
+                else:
+                    logs.append({
+                        "timestamp": "",
+                        "host": "",
+                        "message": line
+                    })
+    except Exception as e:
+        logs.append({"timestamp": "", "host": "", "message": f"Erreur journald: {e}"})
+
+    cached_system_logs = logs
+    last_logs_check = now
+    return cached_system_logs
+
 def get_battery_info() -> Optional[dict]:
     try:
         batt = psutil.sensors_battery()
@@ -385,7 +477,7 @@ def get_battery_info() -> Optional[dict]:
     return None
 
 def collect_metrics_data() -> dict:
-    global prev_disk_io, prev_net_io, prev_io_time, speeds
+    global prev_disk_io, prev_net_io, prev_pernic_io, prev_io_time, speeds
     
     now = time.time()
     dt = now - prev_io_time
@@ -433,20 +525,58 @@ def collect_metrics_data() -> dict:
         speeds["net_recv"] = max(0.0, (current_net_io.bytes_recv - prev_net_io.bytes_recv) / dt)
     prev_net_io = current_net_io
     
+    # Per-interface network speeds
+    pernic_stats = []
+    current_pernic = psutil.net_io_counters(pernic=True)
+    net_if_stats = psutil.net_if_stats()
+    
+    for nic_name, counters in current_pernic.items():
+        if nic_name == "lo":
+            continue
+        nic_type = "Autre"
+        if nic_name.startswith(("en", "eth")):
+            nic_type = "Ethernet"
+        elif nic_name.startswith(("wl")):
+            nic_type = "Wi-Fi"
+        elif nic_name.startswith(("tun", "tap", "wg", "tailscale")):
+            nic_type = "VPN"
+            
+        is_up = net_if_stats[nic_name].isup if nic_name in net_if_stats else True
+        
+        recv_speed = 0.0
+        sent_speed = 0.0
+        if nic_name in prev_pernic_io:
+            recv_speed = max(0.0, (counters.bytes_recv - prev_pernic_io[nic_name][0]) / dt)
+            sent_speed = max(0.0, (counters.bytes_sent - prev_pernic_io[nic_name][1]) / dt)
+        prev_pernic_io[nic_name] = (counters.bytes_recv, counters.bytes_sent)
+        
+        pernic_stats.append({
+            "name": nic_name,
+            "type": nic_type,
+            "is_up": is_up,
+            "recv_speed": recv_speed,
+            "sent_speed": sent_speed,
+            "total_recv": counters.bytes_recv,
+            "total_sent": counters.bytes_sent
+        })
+        
     prev_io_time = now
     
     cpu_temp = get_cpu_temp()
     gpu_temp = get_gpu_temp()
+    fans = get_fan_speeds()
     battery = get_battery_info()
     top_processes = get_top_processes()
     services_status = get_systemd_services_status()
     open_ports = get_open_ports()
+    journal_logs = get_system_journal_logs()
     
     metrics = {
         "timestamp": now,
         "system": SYSTEM_INFO,
         "load_avg": load_avg,
         "battery": battery,
+        "ping_ms": cached_ping_ms,
         "cpu": {
             "usage": cpu_usage,
             "cores": cpu_cores,
@@ -465,15 +595,20 @@ def collect_metrics_data() -> dict:
         },
         "net_io": {
             "bytes_sent_speed": speeds["net_sent"],
-            "bytes_recv_speed": speeds["net_recv"]
+            "bytes_recv_speed": speeds["net_recv"],
+            "total_sent": current_net_io.bytes_sent if current_net_io else 0,
+            "total_recv": current_net_io.bytes_recv if current_net_io else 0,
+            "interfaces": pernic_stats
         },
         "temperatures": {
             "cpu": cpu_temp,
             "gpu": gpu_temp
         },
+        "fans": fans,
         "processes": top_processes,
         "services": services_status,
         "open_ports": open_ports,
+        "logs": journal_logs,
         "settings": settings
     }
     
@@ -487,6 +622,15 @@ def collect_metrics_data() -> dict:
     save_metric_to_db(now, cpu_usage, ram.percent, cpu_temp if cpu_temp is not None else 0.0)
     
     return metrics
+
+async def ping_worker_loop():
+    """Tâche de fond mesurant la latence ping toutes les 6 secondes."""
+    while True:
+        try:
+            await asyncio.get_event_loop().run_in_executor(None, measure_ping_task)
+        except Exception as e:
+            print(f"[ERREUR] Ping worker: {e}")
+        await asyncio.sleep(6.0)
 
 async def metrics_collector_loop():
     global current_metrics
@@ -516,6 +660,7 @@ async def startup_event():
     for p in db_hist:
         history_buffer.append(p)
     asyncio.create_task(metrics_collector_loop())
+    asyncio.create_task(ping_worker_loop())
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -532,6 +677,7 @@ async def get_dashboard():
     except Exception as e:
         return HTMLResponse(content=f"<h1>Erreur serveur</h1><p>{str(e)}</p>", status_code=500)
 
+# --- PWA ENDPOINTS ---
 @app.get("/manifest.json")
 async def get_manifest():
     return FileResponse(os.path.join(BASE_DIR, "manifest.json"), media_type="application/json")
@@ -574,6 +720,15 @@ async def prometheus_metrics():
             f"node_cpu_temperature_celsius {current_metrics['temperatures']['cpu']:.2f}"
         ])
         
+    if current_metrics.get('fans'):
+        for fan in current_metrics['fans']:
+            chip = fan.get('chip', 'fan')
+            label = fan.get('label', 'fan').replace(' ', '_').replace('/', '_')
+            lines.append(f'node_fan_speed_rpm{{chip="{chip}",label="{label}"}} {fan["rpm"]}')
+
+    if current_metrics.get('ping_ms') is not None:
+        lines.append(f'node_network_ping_latency_ms {current_metrics["ping_ms"]:.2f}')
+        
     lines.extend([
         "# HELP node_disk_read_bytes_per_sec Disk read speed in bytes per sec.",
         "# TYPE node_disk_read_bytes_per_sec gauge",
@@ -584,6 +739,8 @@ async def prometheus_metrics():
         "# TYPE node_network_receive_bytes_per_sec gauge",
         f"node_network_receive_bytes_per_sec {current_metrics['net_io']['bytes_recv_speed']:.2f}",
         f"node_network_transmit_bytes_per_sec {current_metrics['net_io']['bytes_sent_speed']:.2f}",
+        f"node_network_total_receive_bytes {current_metrics['net_io']['total_recv']}",
+        f"node_network_total_transmit_bytes {current_metrics['net_io']['total_sent']}",
     ])
     
     return PlainTextResponse("\n".join(lines) + "\n")
@@ -625,7 +782,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         p.terminate()
                         result["success"] = True
                         result["message"] = f"Le processus {p.name()} (PID {pid}) a été arrêté avec succès."
-                        # Forcer le rafraîchissement immédiat du cache processus
                         global last_proc_check
                         last_proc_check = 0.0
                     except psutil.NoSuchProcess:
