@@ -914,12 +914,18 @@
 
         <!-- System Journal Logs Terminal Card -->
         <div class="proc-card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div class="card-title">
                     <i data-lucide="file-text" class="card-icon" style="color: var(--accent-amber);"></i>
                     <span>Logs Système en Direct (Journald - Erreurs & Alertes)</span>
                 </div>
-                <input type="text" id="log-filter-input" placeholder="Filtrer les logs..." class="form-control" style="max-width: 240px; padding: 6px 12px; font-size: 12px;" oninput="filterLogs()">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="text" id="log-filter-input" placeholder="Filtrer les logs..." class="form-control" style="max-width: 240px; padding: 6px 12px; font-size: 12px;" oninput="filterLogs()">
+                    <button class="btn-action" id="btn-copy-logs" onclick="copyLogsToClipboard()" title="Copier tous les logs affichés">
+                        <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
+                        <span id="btn-copy-logs-text">Copier</span>
+                    </button>
+                </div>
             </div>
             
             <div class="log-console" id="log-console">
@@ -1497,6 +1503,59 @@
             const query = document.getElementById('log-filter-input').value.toLowerCase();
             const filtered = latestRawLogs.filter(l => l.message.toLowerCase().includes(query) || (l.timestamp && l.timestamp.includes(query)));
             renderLogs(filtered);
+        }
+
+        function copyLogsToClipboard() {
+            const query = document.getElementById('log-filter-input').value.toLowerCase();
+            const logsToCopy = query
+                ? latestRawLogs.filter(l => l.message.toLowerCase().includes(query) || (l.timestamp && l.timestamp.includes(query)))
+                : latestRawLogs;
+
+            if (!logsToCopy || logsToCopy.length === 0) {
+                alert("Aucun log à copier.");
+                return;
+            }
+
+            const text = logsToCopy.map(l => {
+                const timeClean = l.timestamp ? l.timestamp.split('T')[1] || l.timestamp : '';
+                return `[${timeClean}] ${l.message}`;
+            }).join('\n');
+
+            const btnText = document.getElementById('btn-copy-logs-text');
+            const btn = document.getElementById('btn-copy-logs');
+            const markCopied = () => {
+                btnText.textContent = "Copié !";
+                btn.style.borderColor = "var(--accent-green)";
+                btn.style.color = "var(--accent-green)";
+                setTimeout(() => {
+                    btnText.textContent = "Copier";
+                    btn.style.borderColor = "";
+                    btn.style.color = "";
+                }, 2000);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(markCopied).catch(() => fallbackCopyText(text, markCopied));
+            } else {
+                fallbackCopyText(text, markCopied);
+            }
+        }
+
+        function fallbackCopyText(text, onSuccess) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful && onSuccess) onSuccess();
+            } catch (err) {
+                alert("Impossible de copier dans le presse-papier.");
+            }
+            document.body.removeChild(textarea);
         }
 
         function escapeHtml(str) {
