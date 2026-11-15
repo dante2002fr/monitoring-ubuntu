@@ -769,7 +769,7 @@
                         <span class="submetric-value" id="ram-free-val">0 GB</span>
                     </div>
                     <div class="submetric-item">
-                        <span class="submetric-label">Swap / Cache</span>
+                        <span class="submetric-label">Swap (Utilisé / Total)</span>
                         <span class="submetric-value" id="ram-swap-val">--</span>
                     </div>
                 </div>
@@ -1099,6 +1099,9 @@
         let latestRawLogs = [];
         let audioCtx = null;
         let lastAudioBeepTime = 0;
+        let prevDisksJson = '';
+        let prevServicesJson = '';
+        let prevFansJson = '';
 
         const ctx = document.getElementById('history-chart').getContext('2d');
         const chartData = {
@@ -1309,7 +1312,13 @@
             document.getElementById('ram-used-text').textContent = `${formatBytes(ram.used)} utilisés`;
             document.getElementById('ram-total-text').textContent = `Total: ${formatBytes(ram.total)}`;
             document.getElementById('ram-free-val').textContent = formatBytes(ram.free);
-            document.getElementById('ram-swap-val').textContent = formatBytes(ram.total - ram.used - ram.free);
+            if (metrics.swap && metrics.swap.total > 0) {
+                document.getElementById('ram-swap-val').textContent = `${formatBytes(metrics.swap.used)} / ${formatBytes(metrics.swap.total)} (${metrics.swap.percent}%)`;
+            } else if (metrics.swap) {
+                document.getElementById('ram-swap-val').textContent = '0 B';
+            } else {
+                document.getElementById('ram-swap-val').textContent = '--';
+            }
 
             // Temperatures
             const temps = metrics.temperatures;
@@ -1320,49 +1329,67 @@
                 document.getElementById('temp-val').textContent = `--`;
                 document.getElementById('temp-cpu-val').textContent = `N/A`;
             }
-            document.getElementById('temp-gpu-val').textContent = temps.gpu !== null ? `${temps.gpu.toFixed(1)}°C` : `N/A`;
+            if (metrics.gpu_busy_percent !== null && metrics.gpu_busy_percent !== undefined) {
+                document.getElementById('temp-gpu-val').textContent = `${temps.gpu !== null ? temps.gpu.toFixed(1) + '°C' : '--'} (${metrics.gpu_busy_percent}%)`;
+            } else {
+                document.getElementById('temp-gpu-val').textContent = temps.gpu !== null ? `${temps.gpu.toFixed(1)}°C` : `N/A`;
+            }
 
-            // Fans
+            // Fans (Cached rendering with targeted Lucide call)
             const fans = metrics.fans || [];
             const fanContainer = document.getElementById('fans-container');
             const fanMainVal = document.getElementById('fan-main-val');
             if (fans.length > 0) {
                 fanMainVal.textContent = `${fans[0].rpm} RPM`;
-                fanContainer.innerHTML = '';
-                fans.forEach(f => {
-                    fanContainer.innerHTML += `
-                        <div class="fan-item">
-                            <i data-lucide="fan" class="fan-icon-spin" style="width: 18px; height: 18px;"></i>
-                            <div class="fan-rpm">${f.rpm}</div>
-                            <div class="fan-label">${f.label}</div>
+                const fansJson = JSON.stringify(fans);
+                if (fansJson !== prevFansJson) {
+                    prevFansJson = fansJson;
+                    fanContainer.innerHTML = '';
+                    fans.forEach(f => {
+                        fanContainer.innerHTML += `
+                            <div class="fan-item">
+                                <i data-lucide="fan" class="fan-icon-spin" style="width: 18px; height: 18px;"></i>
+                                <div class="fan-rpm">${f.rpm}</div>
+                                <div class="fan-label">${escapeHtml(f.label)}</div>
+                            </div>
+                        `;
+                    });
+                    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                        lucide.createIcons({ root: fanContainer });
+                    }
+                }
+            } else {
+                fanMainVal.textContent = `N/A`;
+                if (prevFansJson !== 'empty') {
+                    prevFansJson = 'empty';
+                    fanContainer.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-secondary); font-size: 12px; text-align: center;">Aucun capteur RPM actif</div>`;
+                }
+            }
+
+            // Storage Partitions (Only re-rendered if changed)
+            const disksJson = JSON.stringify(metrics.disks);
+            if (disksJson !== prevDisksJson) {
+                prevDisksJson = disksJson;
+                const partitionList = document.getElementById('partition-list');
+                partitionList.innerHTML = '';
+                metrics.disks.forEach((disk) => {
+                    partitionList.innerHTML += `
+                        <div class="partition-item">
+                            <div class="partition-meta">
+                                <span>${escapeHtml(disk.mountpoint)} (${escapeHtml(disk.fstype)})</span>
+                                <span>${disk.percent}%</span>
+                            </div>
+                            <div class="partition-bar-container">
+                                <div class="partition-bar" style="width: ${disk.percent}%; background: ${disk.percent > 90 ? 'var(--accent-red)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)'}"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                                <span>Libre: ${formatBytes(disk.free)}</span>
+                                <span>Total: ${formatBytes(disk.total)}</span>
+                            </div>
                         </div>
                     `;
                 });
-            } else {
-                fanMainVal.textContent = `N/A`;
-                fanContainer.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-secondary); font-size: 12px; text-align: center;">Aucun capteur RPM actif</div>`;
             }
-
-            // Storage Partitions
-            const partitionList = document.getElementById('partition-list');
-            partitionList.innerHTML = '';
-            metrics.disks.forEach((disk) => {
-                partitionList.innerHTML += `
-                    <div class="partition-item">
-                        <div class="partition-meta">
-                            <span>${disk.mountpoint} (${disk.fstype})</span>
-                            <span>${disk.percent}%</span>
-                        </div>
-                        <div class="partition-bar-container">
-                            <div class="partition-bar" style="width: ${disk.percent}%; background: ${disk.percent > 90 ? 'var(--accent-red)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)'}"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-                            <span>Libre: ${formatBytes(disk.free)}</span>
-                            <span>Total: ${formatBytes(disk.total)}</span>
-                        </div>
-                    </div>
-                `;
-            });
 
             // Speeds
             document.getElementById('disk-read-val').textContent = formatSpeed(metrics.disk_io.read_speed);
@@ -1382,8 +1409,8 @@
                     nicList.innerHTML += `
                         <div class="nic-item">
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <strong style="color: var(--accent-cyan);">${nic.name}</strong>
-                                <span style="font-size: 10px; color: var(--text-secondary);">(${nic.type})</span>
+                                <strong style="color: var(--accent-cyan);">${escapeHtml(nic.name)}</strong>
+                                <span style="font-size: 10px; color: var(--text-secondary);">(${escapeHtml(nic.type)})</span>
                             </div>
                             <div style="display: flex; gap: 10px; font-family: 'Space Grotesk';">
                                 <span style="color: var(--accent-green);">↓ ${formatSpeed(nic.recv_speed)}</span>
@@ -1394,18 +1421,22 @@
                 });
             }
 
-            // Systemd Services
+            // Systemd Services (Only re-rendered if changed)
             if (metrics.services) {
-                const srvContainer = document.getElementById('services-badge-list');
-                srvContainer.innerHTML = '';
-                metrics.services.forEach(srv => {
-                    srvContainer.innerHTML += `
-                        <div class="service-badge-item">
-                            <span style="font-weight: 500;">${srv.name}</span>
-                            <span class="status-pill ${srv.status}">${srv.status}</span>
-                        </div>
-                    `;
-                });
+                const servicesJson = JSON.stringify(metrics.services);
+                if (servicesJson !== prevServicesJson) {
+                    prevServicesJson = servicesJson;
+                    const srvContainer = document.getElementById('services-badge-list');
+                    srvContainer.innerHTML = '';
+                    metrics.services.forEach(srv => {
+                        srvContainer.innerHTML += `
+                            <div class="service-badge-item">
+                                <span style="font-weight: 500;">${escapeHtml(srv.name)}</span>
+                                <span class="status-pill ${escapeHtml(srv.status)}">${escapeHtml(srv.status)}</span>
+                            </div>
+                        `;
+                    });
+                }
             }
 
             // Open Network Ports
@@ -1416,8 +1447,8 @@
                     portsBody.innerHTML += `
                         <tr>
                             <td><strong style="color: var(--accent-cyan);">${pt.port}</strong></td>
-                            <td><span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${pt.proto}</span></td>
-                            <td>${pt.process}</td>
+                            <td><span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${escapeHtml(pt.proto)}</span></td>
+                            <td>${escapeHtml(pt.process)}</td>
                             <td>${pt.pid}</td>
                         </tr>
                     `;
@@ -1469,7 +1500,7 @@
                 alertBanner.style.display = 'none';
             }
 
-            // Add point to raw History array and update Chart
+            // Add point to raw History array
             rawHistoryData.push({
                 timestamp: metrics.timestamp,
                 cpu: cpuUsage,
@@ -1477,8 +1508,13 @@
                 temp: temps.cpu !== null ? temps.cpu : 0.0
             });
             
+            // Purge rawHistoryData to keep at most the last 24 hours (86400 seconds)
+            const cutoff24h = metrics.timestamp - 86400;
+            while (rawHistoryData.length > 0 && rawHistoryData[0].timestamp < cutoff24h) {
+                rawHistoryData.shift();
+            }
+
             renderHistoryChart();
-            lucide.createIcons();
         }
 
         function renderLogs(logs) {

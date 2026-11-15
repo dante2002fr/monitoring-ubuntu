@@ -1,5 +1,6 @@
 import asyncio
 from collections import deque
+import glob
 import json
 import os
 import platform
@@ -21,6 +22,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 DB_FILE = os.path.join(BASE_DIR, "monitoring.db")
 
+ALLOWED_ORIGINS = {"http://127.0.0.1:8000", "http://localhost:8000"}
+
 DEFAULT_SETTINGS = {
     "notifications_enabled": True,
     "sound_enabled": True,
@@ -30,13 +33,16 @@ DEFAULT_SETTINGS = {
     "webhook_url": ""
 }
 
-# --- SQLITE DATABASE MANAGER (BATCHED) ---
+# --- SQLITE DATABASE MANAGER (BATCHED & WAL OPTIMIZED) ---
 sqlite_write_buffer = []
+last_retention_purge = 0.0
 
 def init_db():
     try:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS metrics_history (
                 timestamp REAL PRIMARY KEY,
@@ -52,22 +58,29 @@ def init_db():
 
 def save_metric_to_db(ts: float, cpu: float, ram: float, temp: float):
     sqlite_write_buffer.append((ts, cpu, ram, temp))
-    if len(sqlite_write_buffer) >= 5:
+    if len(sqlite_write_buffer) >= 30:
         flush_db_buffer()
 
 def flush_db_buffer():
-    global sqlite_write_buffer
+    global sqlite_write_buffer, last_retention_purge
     if not sqlite_write_buffer:
         return
     try:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
         cursor.executemany("""
             INSERT OR REPLACE INTO metrics_history (timestamp, cpu, ram, temp)
             VALUES (?, ?, ?, ?)
         """, sqlite_write_buffer)
-        cutoff = time.time() - 604800
-        cursor.execute("DELETE FROM metrics_history WHERE timestamp < ?", (cutoff,))
+        
+        now = time.time()
+        if now - last_retention_purge > 3600:
+            cutoff = now - 604800
+            cursor.execute("DELETE FROM metrics_history WHERE timestamp < ?", (cutoff,))
+            last_retention_purge = now
+
         conn.commit()
         conn.close()
         sqlite_write_buffer.clear()
@@ -141,6 +154,9 @@ active_connections: Set[WebSocket] = set()
 cached_ping_ms: Optional[float] = None
 last_ping_time: float = 0.0
 
+# GPU state
+nvidia_smi_available = True
+
 def measure_ping_task():
     global cached_ping_ms
     try:
@@ -200,6 +216,7 @@ def get_cpu_temp() -> Optional[float]:
     return None
 
 def get_gpu_temp() -> Optional[float]:
+    global nvidia_smi_available
     try:
         temps = psutil.sensors_temperatures()
         if temps:
@@ -208,6 +225,18 @@ def get_gpu_temp() -> Optional[float]:
                     for entry in temps[name]:
                         if entry.label == "edge" or not entry.label:
                             return entry.current
+                    if temps[name]:
+                        return temps[name][0].current
+            # If amdgpu is present, do not run nvidia-smi
+            if "amdgpu" in temps:
+                return None
+    except Exception:
+        pass
+
+    if not nvidia_smi_available:
+        return None
+
+    try:
         res = subprocess.run(
             ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
             stdout=subprocess.PIPE,
@@ -217,6 +246,23 @@ def get_gpu_temp() -> Optional[float]:
         )
         if res.returncode == 0:
             return float(res.stdout.strip())
+        else:
+            nvidia_smi_available = False
+    except FileNotFoundError:
+        nvidia_smi_available = False
+    except Exception:
+        pass
+
+    return None
+
+def get_gpu_busy_percent() -> Optional[float]:
+    try:
+        paths = glob.glob("/sys/class/drm/card*/device/gpu_busy_percent")
+        if paths:
+            with open(paths[0], "r", encoding="utf-8") as f:
+                val = f.read().strip()
+                if val:
+                    return float(val)
     except Exception:
         pass
     return None
@@ -312,18 +358,21 @@ def check_alerts(metrics: dict):
 
 # --- CACHED HEAVY METRICS TO MINIMIZE CPU IMPACT ---
 last_proc_check = 0.0
-cached_top_processes = {"top_cpu": [], "top_ram": []}
+cached_top_processes = {"top_cpu": [], "top_ram": [], "d_state_count": 0}
 
 def get_top_processes() -> dict:
     global last_proc_check, cached_top_processes
     now = time.time()
-    if now - last_proc_check < 5.0 and cached_top_processes["top_cpu"]:
+    if now - last_proc_check < 5.0 and cached_top_processes.get("top_cpu"):
         return cached_top_processes
 
     procs = []
-    for p in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent', 'memory_info']):
+    d_count = 0
+    for p in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent', 'memory_info', 'status']):
         try:
             p_info = p.info
+            if p_info.get('status') == psutil.STATUS_DISK_SLEEP:
+                d_count += 1
             p_info['memory_bytes'] = p_info['memory_info'].rss if p_info['memory_info'] else 0
             procs.append(p_info)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -343,7 +392,8 @@ def get_top_processes() -> dict:
     
     cached_top_processes = {
         "top_cpu": [format_proc(p) for p in top_cpu],
-        "top_ram": [format_proc(p) for p in top_ram]
+        "top_ram": [format_proc(p) for p in top_ram],
+        "d_state_count": d_count
     }
     last_proc_check = now
     return cached_top_processes
@@ -489,6 +539,7 @@ def collect_metrics_data() -> dict:
     cpu_count = len(cpu_cores)
     
     ram = psutil.virtual_memory()
+    swap_mem = psutil.swap_memory()
     
     try:
         load_avg = list(os.getloadavg())
@@ -564,6 +615,7 @@ def collect_metrics_data() -> dict:
     
     cpu_temp = get_cpu_temp()
     gpu_temp = get_gpu_temp()
+    gpu_busy = get_gpu_busy_percent()
     fans = get_fan_speeds()
     battery = get_battery_info()
     top_processes = get_top_processes()
@@ -588,6 +640,14 @@ def collect_metrics_data() -> dict:
             "free": ram.available,
             "percent": ram.percent
         },
+        "swap": {
+            "total": swap_mem.total,
+            "used": swap_mem.used,
+            "free": swap_mem.free,
+            "percent": swap_mem.percent
+        },
+        "gpu_busy_percent": gpu_busy,
+        "d_state_processes": top_processes.get("d_state_count", 0),
         "disks": disks,
         "disk_io": {
             "read_speed": speeds["disk_read"],
@@ -640,7 +700,7 @@ async def metrics_collector_loop():
     
     while True:
         try:
-            current_metrics = collect_metrics_data()
+            current_metrics = await asyncio.to_thread(collect_metrics_data)
             check_alerts(current_metrics)
             
             if active_connections:
@@ -706,6 +766,15 @@ async def prometheus_metrics():
         f"node_memory_total_bytes {current_metrics['ram']['total']}",
         f"node_memory_used_bytes {current_metrics['ram']['used']}",
         
+        "# HELP node_memory_swap_used_bytes Swap memory used bytes.",
+        "# TYPE node_memory_swap_used_bytes gauge",
+        f"node_memory_swap_used_bytes {current_metrics['swap']['used']}",
+        f"node_memory_swap_total_bytes {current_metrics['swap']['total']}",
+        
+        "# HELP node_processes_uninterruptible_sleep Count of processes in D-state.",
+        "# TYPE node_processes_uninterruptible_sleep gauge",
+        f"node_processes_uninterruptible_sleep {current_metrics['d_state_processes']}",
+        
         "# HELP node_load_1m 1 minute load average.",
         "# TYPE node_load_1m gauge",
         f"node_load_1m {current_metrics['load_avg'][0]:.2f}",
@@ -718,6 +787,13 @@ async def prometheus_metrics():
             "# HELP node_cpu_temperature_celsius CPU Core Temperature in Celsius.",
             "# TYPE node_cpu_temperature_celsius gauge",
             f"node_cpu_temperature_celsius {current_metrics['temperatures']['cpu']:.2f}"
+        ])
+        
+    if current_metrics.get('gpu_busy_percent') is not None:
+        lines.extend([
+            "# HELP node_gpu_busy_percent GPU busy percentage.",
+            "# TYPE node_gpu_busy_percent gauge",
+            f"node_gpu_busy_percent {current_metrics['gpu_busy_percent']:.2f}"
         ])
         
     if current_metrics.get('fans'):
@@ -747,6 +823,11 @@ async def prometheus_metrics():
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    origin = websocket.headers.get("origin")
+    if origin is not None and origin not in ALLOWED_ORIGINS:
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
     active_connections.add(websocket)
     

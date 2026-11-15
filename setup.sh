@@ -16,7 +16,7 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 CURRENT_USER=$(whoami)
-CURRENT_DIR=$(pwd)
+CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo -e "${BLUE}[1/5] Vérification des prérequis système...${NC}"
 
@@ -61,9 +61,9 @@ if ! command -v uv &> /dev/null; then
     exit 1
 fi
 
-if [ ! -d ".venv" ]; then
-    echo -e "Création du dossier .venv..."
-    uv venv .venv
+if [ ! -d "$CURRENT_DIR/.venv" ]; then
+    echo -e "Création du dossier .venv dans $CURRENT_DIR..."
+    uv venv "$CURRENT_DIR/.venv"
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERREUR] Échec de la création de la venv avec uv.${NC}"
         exit 1
@@ -74,27 +74,36 @@ fi
 
 # 3. Installation des dépendances
 echo -e "\n${BLUE}[4/5] Installation des dépendances (FastAPI, Uvicorn, psutil)...${NC}"
-uv pip install --python .venv/bin/python fastapi "uvicorn[standard]" psutil
+uv pip install --python "$CURRENT_DIR/.venv/bin/python" fastapi "uvicorn[standard]" psutil
 if [ $? -ne 0 ]; then
     echo -e "${RED}[ERREUR] Échec de l'installation des dépendances.${NC}"
     exit 1
 fi
 echo -e "${GREEN}[OK] Dépendances installées.${NC}"
 
-# 4. Configuration du service systemd utilisateur (sans sudo)
+# 4. Configuration du service systemd utilisateur (sans sudo, chemins dynamiques)
 echo -e "\n${BLUE}[5/5] Installation et activation du service systemd (utilisateur)...${NC}"
-SERVICE_FILE="monitoring.service"
-
-if [ ! -f "$SERVICE_FILE" ]; then
-    echo -e "${RED}[ERREUR] Fichier $SERVICE_FILE introuvable dans le répertoire courant.${NC}"
-    exit 1
-fi
 
 # Création du dossier systemd utilisateur s'il n'existe pas
 mkdir -p "$HOME/.config/systemd/user"
 
-echo -e "Copie du fichier de service dans ~/.config/systemd/user/..."
-cp "$SERVICE_FILE" "$HOME/.config/systemd/user/monitoring.service"
+echo -e "Génération dynamique du service dans ~/.config/systemd/user/monitoring.service..."
+cat <<EOF > "$HOME/.config/systemd/user/monitoring.service"
+[Unit]
+Description=Service de Monitoring Système Ubuntu (Session Utilisateur)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=$CURRENT_DIR
+ExecStart=$CURRENT_DIR/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
+EOF
 
 echo -e "Rechargement du démon systemd utilisateur..."
 systemctl --user daemon-reload
@@ -102,8 +111,8 @@ systemctl --user daemon-reload
 echo -e "Activation du service utilisateur..."
 systemctl --user enable monitoring.service
 
-echo -e "Activation du lingering pour que le service tourne au démarrage sans connexion requise..."
-loginctl enable-linger
+echo -e "Activation du lingering pour l'utilisateur $CURRENT_USER (persistance après déconnexion)..."
+loginctl enable-linger "$CURRENT_USER"
 
 echo -e "Démarrage du service de monitoring utilisateur..."
 systemctl --user restart monitoring.service
